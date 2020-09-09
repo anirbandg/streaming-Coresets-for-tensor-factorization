@@ -1,0 +1,42 @@
+\section{Preliminaries}{\label{sec:prelimnary}}
+We use the following notation throughout the paper. A scalar is denoted by a lower case letter, e.g., $p$ while a vector is denoted by a boldface lower case letter, e.g., $\*a$. 
+By default, all vectors are considered as column vectors unless specified otherwise. Matrices and sets are denoted by boldface upper case letters, e.g., $\*A$. %The $i^{th}$ column and $j^{th}$ row of the matrix are denoted by $a_{i}$ and $a_{j}^{T}$ respectively.
+Specifically, $\*A$ denotes an $n\times d$ matrix
+with set of rows $\{\*a_{i}\}$ and, in the streaming setting, $\*A_{i}$ represents the matrix formed by the first $i$ rows of $\*A$ that have arrived. We will interchangeably refer to the set $\{\*a_i\}$ as the input set of vectors as well as the rows of the matrix $\*A$. A tensor is denoted by a bold calligraphy letter e.g. $\mcal T$. Given a set of $d-$dimensional vectors $\*a_1, \ldots, \*a_n$, from which a $p$-order symmetric tensor $\mcal T$ is obtained as
+$ \mcal T = \sum_{i=1}^n \*a_i \otimes^{p}$
+i.e., the sum of the $p$-order outer product of each of the vectors. It is easy to see that $\mcal T$ is a symmetric tensor as it satisfies
+the following: $\forall i_{1},i_{2},_{\cdots},i_{p}; \mcal T_{i_{1},i_{2},_{\cdots},i_{p}} = \mcal T_{i_{2},i_{1},_{\cdots},i_{p}} = _{\cdots} = \mcal T_{i_{p},i_{p-1},_{\cdots},i_{1}}$, i.e. all the tensor entries with indices as some permutations of $(i_1, i_2, _{\cdots}, i_p)$ have the same value. We define the scalar quantity, also known as tensor contraction, as $\mcal T(\*x,\ldots,\*x) = \sum_{i=1}^{n}(\*a_i^T\*x)^p$, where $\*x \in \~R^{d}$. There are three widely used tensor decomposition techniques known as CANDECOMP/PARAFAC(CP), Tucker and Tensor Train decomposition. Our work focuses on CP decomposition. In rest of the paper tensor decomposition is referred as CP decomposition.
+
+We denote 2-norm for a vector $\*x$ as $\|\*x\|$, and any $p$-norm, for $p\neq 2$ as $\|\*x\|_p$. We denote the 2-norm or spectral norm of a matrix $\*A$ by $\|\*A\|$. For a $p$-order tensor $\mcal T$ we denote the spectral norm as $\|\mcal T\|$ which is defined as $\|\mcal T\| = \sup_{\*x}\frac{|\mcal T(\*x,\ldots,\*x)|}{\|\*x\|^{p}}$.
+
+\textbf{Coreset:}
+It is a small summary of data which can give provable guarantees for a particular optimization problem. Formally, given a set
+$\*X \subseteq \~R^d$, query set $\*Q$, a non-negative cost function $\mathnormal{f}_{\*q}(\*x)$ with parameter $\*q \in \*Q$ and data point $\*x \in \*X$, a set of subsampled and appropriately reweighed points $\*C$ is called a {\em coreset} if $\forall \*q \in \*Q$,  $|\sum_{\*x \in \*X}\mathnormal{f}_{\*q}(\*x) - \sum_{\tilde{\*x} \in \*C}\mathnormal{f}_{\*q}(\mathbf{\tilde{x}})| \leq \epsilon\sum_{\*x \in \*X}\mathnormal{f}_{\*q}(\*x)$ for some $\epsilon > 0$.
+We can relax the definition of coreset to allow a small additive error. For $\epsilon, \gamma > 0$, we can have a subset $\*C\subseteq \*X$ such that $\forall \*q \in \*Q$, $|\sum_{\*x \in \*X}\mathnormal{f}_{\*q}(\*x) - \sum_{\mathbf{\tilde{x}} \in \*C}\mathnormal{f}_{\*q}(\mathbf{\tilde{x}})| \leq \epsilon\sum_{\*x \in \*X}\mathnormal{f}_{\*q}(\*x) + \gamma$. 
+% given a weighted dataset $\mathcal{X}$, let $\mathnormal{x} \in \mathcal{X}$ and $\mu_\mathcal{X}(\mathnormal{x})$ be its corresponding non-negative weight. 
+% Let $\mathcal{Q}$ be a set of solutions known as query space and 
+% $\mathnormal{q} \in \mathcal{Q}$ be a query and let 
+% $\mathnormal{f}_\mathnormal{q}(\mathnormal{x})$ be a non-negative function. 
+
+To guarantee the above approximation, one can define a set of scores, termed as sensitivities \cite{langberg2010universal} corresponding to each point. This can be used to create coresets via importance sampling. The sensitivity of a point $ \*x $ is defined as $s_{\*x} = \sup_{\*q \in \*Q} \frac{ \mathnormal{f}_{\*q}(\*x)}{\sum_{\*x' \in \*X} \mathnormal{f}_\*q(\*x')}$. Langberg et.al \cite{langberg2010universal} show that using any upper bounds to the sensitivity scores, we can create a probability distribution, which can be used to sample a coreset. The size of the coreset depends on the sum of these upper bounds and the dimension of the query space.
+
+We use the following definitions and inequalities to prove our guarantees.
+\begin{theorem}{\label{thm:bernstein}}
+\textbf{(Bernstein \cite{dubhashi2009concentration})} Let the scalar random variables $x_{1}, x_{2}, _{\cdots}, x_{n}$ be independent that satisfy $\forall i \in [n]$,  
+$\vert x_{i}-\~E[x_{i}]\vert \leq b$. 
+Let $X = \sum_{i} x_{i}$ and let $\sigma^{2} = \sum_{i} \sigma_{i}^{2}$ be the variance of $X$, where $\sigma_{i}^{2}$ is the variance of $x_{i}$. 
+Then for any $t>0$,
+\begin{center}
+ $\mbox{Pr}\big(X > \~E[X] + t\big) \leq \exp\bigg(\frac{-t^{2}}{2\sigma^{2}+bt/3} \bigg)$
+\end{center}
+\end{theorem}
+% 
+\begin{theorem}{\label{thm:matrixBernstein}}
+ \textbf{(Matrix Bernstein \cite{tropp2015introduction})} Let $\*X_{1},\ldots,\*X_{n}$ are independent $d \times d$ random matrices such that $\forall i \in [n], |\|\*X_{i}\| - \~E[\|\*X_{i}\|]| \leq b$ and $\mbox{var}(\|\*X\|) \leq \sigma^{2}$ where $\*X = \sum_{i=1}^{n}\*X_{i}$, then for some $t>0$,
+ $$\mbox{Pr}(\|\*X\| - \~E[\|\*X\|] \geq t) \leq d\exp\bigg(\frac{-t^{2}/2}{\sigma^{2}+bt/3}\bigg)$$
+\end{theorem}
+% 
+\begin{definition}{\label{argument:epsNet}} 
+\textbf{($\epsilon$-net \cite{haussler1987e})} Given some metric space $\*Q$ its subset $\*P$, i.e., $\*P \subset \*Q$ is an $\epsilon$-net of $\*Q$ on $\ell_{p}$ norm if, $\forall \*x \in \*Q, \exists \*y \in \*P$ such that $\|\*x - \*y\|_{p} \leq \epsilon$.
+\end{definition}
+The $\epsilon$-net is used to ensure our guarantee for all query vector $\*x$ from a fixed dimensional query space $\*Q$ using union bound argument. Similar argument is used and discussed for various applications \cite{woodruff2014sketching}. 

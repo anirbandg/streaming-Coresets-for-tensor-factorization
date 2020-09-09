@@ -1,0 +1,104 @@
+\documentclass{article}
+
+
+\usepackage{arxiv}
+
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+\usepackage[bottom]{footmisc}
+\usepackage{graphicx}
+\usepackage{subfigure}
+\usepackage{booktabs} % for professional tables
+\usepackage{amsmath,amsfonts}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{amsthm}
+\usepackage{verbatim}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{comment}
+
+\def\~#1{\mathbb{#1}}
+\def\*#1{\mathbf{#1}}
+\newcommand{\mcal}[1]{\mathbf{\mathcal{#1}}}
+\newcommand\norm[1]{\left\lVert#1\right\rVert}
+
+\def\oscore{{\texttt{Score}}}
+\def\online{{\texttt{LineFilter}}}
+\def\mr{{\texttt{MergeReduce}}}
+\def\kernel{{\texttt{Kernel}}}
+\def\kernelfilter{{\texttt{KernelFilter}}}
+\def\mrlf{{\texttt{StreamingLF}}}
+\def\mrlw{{\texttt{StreamingLW}}}
+\def\mrwcb{{\texttt{StreamingWCB}}}
+\def\mrfc{{\texttt{StreamingFC}}}
+\def\uni{{\texttt{Uniform}}}
+\def\stream{{\texttt{Streaming}}}
+\def\streamXX{{\texttt{StreamingXX}}}
+
+% For Theorem and Lemmas
+\newtheorem{definition}{Definition}[section]
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{corollary}{Corollary}[section]
+\newtheorem{lemma}{Lemma}[section]
+
+% Attempt to make hyperref and algorithmic work together better:
+% \newcommand{\theHalgorithm}{\arabic{algorithm}}
+% \newcommand{\M}{\mathbf}
+\title{Streaming Coresets for Symmetric Tensor Factorization}
+
+
+\author{
+  Rachit Chhaya\\
+  IIT Gandhinagar\\
+  \texttt{rachit.chhaya@iitgn.ac.in} \\
+  %% examples of more authors
+   \And
+  Jayesh Choudhari\\
+  IIT Gandhinagar\\
+  \texttt{choudhari.jayesh@iitgn.ac.in} \\
+  %% examples of more authors
+   \And
+ Anirban Dasgupta \\
+  IIT Gandhinagar\\
+  \texttt{anirbandg@iitgn.ac.in} \\
+  \AND
+   Supratim Shit \thanks{Corresponding author} \\
+  IIT Gandhinagar \\
+  \texttt{supratim.shit@iitgn.ac.in} \\
+}
+
+\begin{document}
+\nocite{*}
+\maketitle
+
+\begin{abstract}
+Factorizing tensors has recently become an important optimization module in a number of machine learning pipelines, especially in latent variable models. We show how to do this efficiently in the streaming setting. Given a set of $n$ vectors, each in $\~R^d$, we present algorithms to select a sublinear number of these vectors as coreset, while guaranteeing that the CP decomposition of the $p$-moment tensor of the coreset approximates the corresponding decomposition of the $p$-moment tensor computed from the full data. We introduce two novel algorithmic techniques: online filtering and kernelization. Using these two, we present six algorithms that achieve different tradeoffs of coreset size, update time and working space, beating or matching various state of the art algorithms. In the case of matrices ($2$-ordered tensor), our online row sampling algorithm guarantees $(1 \pm \epsilon)$ relative error spectral approximation. We show applications of our algorithms in learning single topic modeling. 
+\end{abstract}
+
+% keywords can be removed
+\keywords{Online \and Streaming \and Tensor Factorization \and Subspace Embedding \and Lp}
+
+\allowdisplaybreaks
+
+\input{sections/introduction.tex}
+\input{sections/preliminary.tex}
+\input{sections/related.tex}
+\input{sections/algorithm.tex}
+\input{sections/proofs.tex}
+\input{sections/application.tex}
+
+\bibliographystyle{unsrt}
+\bibliography{refer}
+
+% \clearpage
+% \appendix
+% \input{sections/appendix.tex}
+
+\end{document}

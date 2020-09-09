@@ -1,0 +1,313 @@
+%\section{Algorithms for $\ell_p$ Subspace Preservation}
+\section{Algorithms and Guarantees}{\label{sec:algorithms}}
+In this section we propose all the six streaming algorithms which are based on two major contributions. 
+We first introduce the two algorithmic modules--\online~and \kernelfilter. For real value $p \geq 2$, \online, on arrival of each row, simply decides whether to sample it or not. The probability of sampling is computed based on the stream seen till now,
+% 
+where as \kernelfilter~works for integer value $p \geq 2$, for every incoming row $\*a_i$, the decision of sampling it, depends on two rows $\grave{\*a}_{i}$ and $\acute{\*a}_{i}$ we define from $\*a_{i}$ such that: for any vector $\*x$, there is a similar transformation $(\grave{\*x}$ and $\acute{\*x})$ and we get, $|\*a_{i}^{T}\*x|^{p}=|\grave{\*a}_{i}^{T}\grave{\*x}|\cdot|\acute{\*a}_{i}^{T}\acute{\*x}|$. For even value $p$ we define $|\*a_{i}^{T}\*x|^{p}=|\acute{\*a}_{i}^{T}\acute{\*x}|^{2}$ and for odd value $p$ we define $|\*a_{i}^{T}\*x|^{p}=|\acute{\*a}_{i}^{T}\acute{\*x}|^{2p/(p+1)}$. We call it kernelization. A similar kernelization is also discussed in \cite{schechtman2011tight} for even value $\ell_{p}$ subspace embedding.
+
+Note that both \online~and \kernelfilter~are restricted streaming algorithms in the sense that each row is selected / processed only when it arrives. For the online nature of the two algorithms we use these as modules in order to create the following algorithms 
+\begin{enumerate}
+    \item \online+\mrlw: Here, the output streams of \online~is fed to a \mrlw, which is a merge-and-reduce based streaming algorithm based on Lewis Weights. Here the \mrlw~outputs the final coreset. 
+    % \item \online+\kernelfilter: The output of \online~is first kernelized into either a single row (or two rows). These rows are then sampled using, what is essentially a version of \online~for $p=2$ case. 
+    \item \online+\kernelfilter: Here, the output streams from \online~is first kernelized. It is then passed to \kernelfilter, which outputs the final coreset.
+    \item \online+\mrlw+\kernelfilter: Here, the output of \online~is fed to \mrlw~further its output is first kernelized and passed to \kernelfilter~, which decide whether to sample it in the final coreset or not.
+\end{enumerate}
+Note that \online+\mrlw~is a streaming algorithm which works for any $p \geq 2$ where as the algorithm \online+\kernelfilter~even works in a restricted streaming setting for integer valued $p \geq 2$. The algorithm \online+\mrlw+\kernelfilter~is a streaming algorithm works for integer value $p \geq 2$. We also propose \mrlf~which is the streaming version of \online.
+
+The algorithms \online~and \kernelfilter~call a function \oscore($\cdot$), which computes a score for every incoming row, and based on the score, the sampling probability of the row is decided. The score depends on the incoming row (say $\*x_{i}$) and some prior knowledge (say $\*M$) of the data, which it has already seen. Here, we define $\*M = \*X_{i-1}^{T}\*X_{i-1}$ and $\*Q$ is its orthonormal column basis. Here $\*X_{i-1}$ represents the matrix with rows $\{\*x_{1},_{\ldots},\*x_{i-1}\}$ which have arrived so far. Now we present \oscore($\cdot$).
+% 
+\begin{algorithm}[htpb]
+\caption{\oscore($\*x_{i}, \*M, \*M_{inv}, \*Q$)}{\label{alg:onineScore}}
+\begin{algorithmic}
+\IF{$\*x_{i} \in \mbox{column-space}(\*Q)$}
+\STATE $\*M_{inv} = \*M_{inv} - \frac{(\*M_{inv})\*x_{i}\*x_{i}^{T}(\*M_{inv})}{1+\*x_{i}^{T}(\*M_{inv})\*x_{i}}$
+\STATE $\*M = \*M + (\*x_{i}\*x_{i}^T)$
+\ELSE
+\STATE $\*M = \*M + \*x_{i}\*x_{i}^{T}; \*M_{inv} = \*M^{\dagger}$
+\STATE $\*Q = \mbox{orthonormal-column-basis}(\*M)$
+\ENDIF
+\STATE $\tilde{e}_{i} = \*x_{i}^T(\*M_{inv})\*x_{i}$
+\STATE Return $\tilde{e}_{i},\*M,\*M_{inv},\*Q$
+\end{algorithmic}
+\end{algorithm}
+
+Here if the incoming row $\*x_{i} \in \~R^{m}$ lies in the subspace spanned by $\*Q$ (i.e., if $\|\*Q\*x_{i}\|=\|\*x_{i}\|$), then the algorithm takes $O(m^{2})$ time as it need not compute $\*M^{\dagger}$ while computing the term $\*M_{inv}$. If $\*x_{i}$ does not lie in the subspace spanned by $\*Q$ then it takes $O(m^{3})$ as the algorithm needs to compute $\*M^{\dagger}$. Here we have used a modified version of Sherman Morrison formula to compute $(\*X_{i}^{T}\*X_{i})^{\dagger} = (\*X_{i-1}^{T}\*X_{i-1}+\*x_{i}\*x_{i}^{T})^{\dagger} = (\*M+\*x_{i}\*x_{i}^{T})^{\dagger}$. Note that in our setup $\*M$ need not be full rank, so we use the formula $(\*X_{i}\*X_{i})^{\dagger} = \*M^{\dagger} - \frac{\*M^{\dagger}\*x_{i}\*x_{i}^{T}\*M^{\dagger}}{1+\*x_{i}^{T}\*M^{\dagger}\*x_{i}}$. In the following lemma we prove the correctness of the formula.
+\begin{lemma}{\label{lemma:modified-SM}}
+ Given a rank-k positive semi-definite matrix $\*M \in \~R^{d \times d}$ and a vector $\*x$ such that it completely lies in the column space of $\*M$. Then we have,
+ \begin{equation*}
+  (\*M + \*x\*x^{T})^{\dagger} = \*M^{\dagger} - \frac{\*M^{\dagger}\*x\*x^{T}\*M^{\dagger}}{1+\*x^{T}\*M^{\dagger}\*x}
+ \end{equation*}
+\end{lemma}
+\begin{proof}
+ The proof is in the similar spirit to lemma \ref{lemma:onlineSummationBound}. Consider $[\*V,\Sigma,\*V] = \mbox{SVD}(\*M)$ and since $\*x$ lies completely in the column space of $\*M$, hence $\exists \*y \in \~R^{k}$ such that $\*V\*y = \*x$. Note that $\*V \in \~R^{d \times k}$.
+ \begin{eqnarray*}
+  (\*M + \*x\*x^{T})^{\dagger} &=& (\*V\Sigma\*V^{T}+\*V\*y\*y^{T}\*V^{T})^{\dagger} \\
+  &=& \*V(\Sigma+\*y\*y^{T})^{-1}\*V^{T} \\
+  &=& \*V\bigg(\Sigma^{-1} - \frac{\Sigma^{-1}\*y\*y^{T}\Sigma^{-1}}{1+y^{T}\Sigma^{-1}\*y}\bigg)\*V \\
+  &=& \*V\bigg(\Sigma^{-1}-\frac{\Sigma^{-1}\*V^{T}\*V\*y\*y^{T}\*V^{T}\*V\Sigma^{-1}}{1+y^{T}\*V^{T}\*V\Sigma^{-1}\*V^{T}\*V\*y}\bigg)\*V\\
+  &=& \*M^{\dagger} - \frac{\*M^{\dagger}\*x\*x^{T}\*M^{\dagger}}{1+\*x^{T}\*M^{\dagger}\*x}
+ \end{eqnarray*}
+ In the above analysis, the first couple of inequalities are by substitution. In the third equality, we use Sherman Morrison formula on the smaller $k \times k$ matrix $\Sigma$ and the rank-1 update $\*y\*y^{T}$.
+\end{proof}
+% 
+\subsection{\online}
+Here we present our first streaming algorithm which ensures equation~\eqref{eq:contract} for integer valued $p \geq 2$ and equation~\eqref{eq:lp} for any real $p \geq 2$. The algorithm can also be used in restricted steaming (online) settings where for every incoming row, we get only one chance to decide whether to sample it or not. Due to its nature of filtering out rows, we call it \online~algorithm. The algorithm tries to reduce the variance of the difference between the cost from the original and the sampled term. In order to achieve that, we use sensitivity based framework to decide the sampling probability of each row. The sampling probability of a row is proportional to its sensitivity scores. In some sense, the sensitivity score of a row captures the fact that how much the variance of the difference is going to get affected if that row is not present in the set of sampled rows. In other words how much the cost function would be affected if the row is not sampled in the coreset. We discuss it in detail in section \ref{sec:proofs}.
+Here we present the \online~algorithm and its corresponding guarantees. 
+\begin{algorithm}[htpb]
+\caption{\online~}{\label{alg:onlineCoreset}}
+\begin{algorithmic}
+\REQUIRE Streaming rows $\*a_{i}^T, i = 1, {}_{\cdots} n, p \geq 2, r > 1$
+\ENSURE Coreset $\*C$ satisfying eqn \eqref{eq:contract} and \eqref{eq:lp} w.h.p.
+\STATE $\*M = \*M_{inv} = \*0^{d \times d}$, $L=0$, $\*C= \emptyset$
+\STATE $\*Q =  \mbox{orthonormal-column-basis}\*M$
+\WHILE{current row $\*a_{i}^T$ is not the last row}
+\STATE $[\tilde{e}_{i}, \*M, \*M_{inv}, \*Q] = \oscore(\*a_{i},\*M, \*M_{inv}, \*Q$)
+\STATE $\tilde{l}_{i} = \min\{i^{p/2-1}(\tilde{e}_{i})^{p/2},1\}; L = L+\tilde{l}_{i}; p_{i} = \min\{r\tilde{l}_{i}/L,1\}$
+\STATE Sample $\*a_{i}/\sqrt[p]{p_{i}}$ in $\*C$ with probability $p_{i}$
+\ENDWHILE
+\STATE Return $\*C$
+\end{algorithmic}
+\end{algorithm}
+
+Every time a row $\*a_{i} \in \~R^{d}$ comes, the \online~ calls the function~\ref{alg:onineScore} (i.e., \oscore($\cdot$)) which returns a score $\tilde{e}_{i}$. Then \online~computes $\tilde{l}_{i}$, which is an upper bound to its sensitivity score. Based on $\tilde{l}_{i}$ the row's sampling probability is decided. We formally define and discuss sensitivity scores of our problem in section \ref{sec:proofs}.
+
+Now for the \oscore($\cdot$) function there can be at most $d$ occasions where an incoming row is not in the row space of the previously seen rows, i.e., $\*Q$. In these cases \oscore($\cdot$) takes $O(d^{3})$ time and for the other, at least $n-d$, cases by Sherman Morrison formula it takes $O(d^{2})$ time to return $\tilde{e}_{i}$. Hence the entire algorithm just takes $O(nd^{2})$ time. Now we summarize the guarantees of \online~in the following theorem.
+\begin{theorem}\label{thm:Online}
+Given $\*A \in \~R^{n \times d}$ whose rows are coming in streaming manner, \online~selects a set $\*C$ of size $O\Big(\frac{n^{1-2/p}dk}{\epsilon^{2}}\big(1+\log\|\*A\|-d^{-1}\min_{i} \log \|\*a_{i}\|\big)\Big)$ using both working space and update time $O(d^2)$. Suppose $\*Q$ is a fixed $k$-dimensional subspace, then with probability at least $0.99$, for integer value $p \geq 2, \epsilon > 0$, $\forall \*x \in \*Q$, the set $\*C$ satisfies both $p$-order tensor contraction and $\ell_{p}$ subspace embedding as in equations \eqref{eq:contract} and \eqref{eq:lp} respectively.
+\end{theorem}
+\online~can also be used to get an $\ell_{p}$ subspace embedding for any real $p \geq 2$. It is worth noting that \online~benefits by taking very less working space and computation time, which are independent of $p$ (order of the tensor) and $n$ (input size). However \online~gives a coreset which is sublinear to input size but as $p$ increases the factor $n^{1-2/p}$ tends to $O(n)$. Hence for higher $p$ the coresets might be as big as the entire dataset. We discuss the proof of the theorem along with its supporting lemma in section \ref{sec:proofs}. Due to the simplicity of the algorithm we present its streaming version \mrlf~in section \ref{sec:streaminglf}. It improves the update time for a cost of higher working space.
+% 
+\subsection{\online+\mrlw}
+Here we present a streaming algorithm which returns a coreset for the same problem with its coreset much smaller than that of \online. First we want to point out that our coresets for tensor contraction i.e., equation \eqref{eq:contract} also preserve $\ell_p$ subspace embedding i.e., equation \eqref{eq:lp}. This is mainly due to two reasons. First is that our coreset is a subsample of original data, and second is because of the way we define our sampling probability.  
+
+For simplicity, we show this relation in the offline setting, where we have access to the entire data $\*A$.
+For a matrix $\*A \in \~R^{n \times d}$, we intend to preserve the tensor contraction property as in equation \eqref{eq:contract}. We create $\*C$ by sampling original row vectors $\*a_{i}$ with appropriate scaling. Hence the rows in $\*C$ also retain the actual structures of the original rows in $\*A$.
+We analyze the variance of the difference between the tensor contraction from the original and the sampled term, through Bernstein inequality \cite{dubhashi2009concentration} and try to reduce it. 
+Here we use sensitivity based framework to decide our sampling probability where we know sensitivity scores are well defined for non negative cost function~\cite{langberg2010universal}. Now with the tensor contraction the problem is that for odd $p$ and for some $\*x$, the cost $(\*a_{i}^{T}\*x)^{p}$ could be negative, for some $i \in [n]$. So for every row $i$ we define the sensitivity score as follows,
+% 
+\begin{equation}{\label{eqn:sensitivity}}
+ s_{i} = \sup_{\*x}\frac{|\*a_{i}^{T}\*x|^{p}}{\sum_{j=1}^{n}|\mathbf{a_{j}}^{T}\*x|^{p}}
+\end{equation}
+% 
+Using Langberg et.al. \cite{langberg2010universal} result, by sampling enough number of rows based on above defined sensitivity scores would preserve $\sum_{i=1}^{n}|\*a_{i}^{T}\*x|^{p} = \|\*A\*x\|_{p}^{p}$. The sampled rows create a coreset $\*C$ which is $\ell_{p}$ subspace embedding, i.e., $\forall \*x$, $|\|\*A\*x\|_{p}^{p} - \|\*C\*x\|_{p}^{p}| \leq \epsilon \|\*A\*x\|_{p}^{p}$. We define and discuss the online version of these scores in section~\ref{sec:proofs} which also preserve tensor contraction as in equation \eqref{eq:contract}.
+Sampling based methods used in~\cite{dasgupta2009sampling, cohen2015p, clarkson2016fast} to get a coreset for $\ell_{p}$ subspace embedding also preserve tensor contraction. This is because these sampling based methods reduce the variance of the difference between the cost function from the original and the sampled terms.
+
+We know that any offline algorithm can be made a streaming algorithm using merge and reduce method~\cite{har2004coresets}. For $p \geq 2$ the sampling complexity of \cite{cohen2015p} is best among all other methods we mentioned. Hence here we use Lewis Weights sampling \cite{cohen2015p} as the offline method along with merge and reduce to convert it into a streaming algorithm which we call \mrlw. The following lemma summarizes the guarantee one gets from \mrlw.
+% 
+\begin{lemma}\label{lemma:Stream-MR}
+ Given a set of $n$ streaming rows $\{\*a_{i}\}$, the \mrlw~returns a coreset $\*C$. For integer $p \geq 2$, a fixed $k$-dimensional subspace $\*Q$, with probability $0.99$ and $\epsilon > 0$, $\forall \*x\in \~R^{d}$, $\*C$ satisfies $p$-order tensor contraction and $\ell_{p}$ subspace embedding as in equations \eqref{eq:contract} and \eqref{eq:lp}.
+
+ It requires $O(d^{p/2})$ amortized update time and uses $O(d^{p/2}\epsilon^{-5}\log^{11} n)$ working space to return a coreset $\*C$ of size $O(d^{p/2}\epsilon^{-5}\log^{10} n)$.
+\end{lemma}
+% The proof is fairly straight forward which we discuss in the appendix A.2.1. %~\ref{proof:Stream-MR}. 
+\begin{proof}\label{proof:Stream-MR}
+ Here the data is coming in streaming sense and it is feed to the streaming version of the algorithm in \cite{cohen2015p}, i.e. \mrlw~for $\ell_{p}$ subspace embedding. We use merge and reduce from \cite{har2004coresets} for streaming data. From the results of \cite{cohen2015p} we know that for a set $\*P$ of size $n$ takes $O(nd^{p/2})$ time to return a coreset $\*Q$ of size $O(d^{p/2}(\log d)\epsilon^{-5})$. Note that for the \mrlw~in section 7 of \cite{har2004coresets} we set $M=O(d^{p/2}(\log d)\epsilon^{-5})$. The method returns $\*Q_{i}$ as the $(1 + \delta_{i})$ coreset for the partition $\*P_{i}$ where $|\*P_{i}|$ is either $2^{i}M$ or $0$, here $\rho_{j} = \epsilon/(c(j+1)^{2})$ such that $1+\delta_{i} = \prod_{j=0}^{i} (1 + \rho_{j}) \leq 1 + \epsilon/2, \forall j \in \lceil \log n \rceil$. Thus we have $|\*Q_{i}|$ is $O(d^{p/2}(\log d)(i+1)^{10}\epsilon^{-5})$. In \mrlw~the method reduce sees at max $\log n$ many coresets $\*Q_{i}$ at any point of time. Hence the total working space is $O(d^{p/2}(\log^{11} n)(\log d)\epsilon^{-5})$. Note that while creating the coreset $\*Q_{i}$ for $\*P_{i}$, the \mrlw~never actually uses the entire $\*P_{i}$ and run offline Lewis Weight based sampling. Instead it uses all $\*Q_{j}$, where $j < i$. Hence the offline method of Lewis Weight based sampling is run over $\cup_{j < i} \*Q_{j}$ which is $O(\*Q_{i})$. Now the amortized time spent per update is,
+ \begin{eqnarray*}
+  && \sum_{i=1}^{\lceil \log (n/M) \rceil} \frac{1}{2^{i}M}O(|\*Q_{i}|d^{p/2}) \\
+  &=& \sum_{i=1}^{\lceil \log (n/M) \rceil} \frac{1}{2^{i}M})(M(i+1)^{4}d^{p/2}) \leq O(d^{p/2})
+ \end{eqnarray*}
+So the finally the algorithm return $\*Q$ as the final coreset of $O(d^{p/2}(\log^{10} n)(\log d)\epsilon^{-5})$ rows and uses $O(d^{p/2})$ amortized update time.
+\end{proof}
+It also guarantees $\ell_{p}$ subspace embedding for real $p \geq 2$. Further, note that in this case both update time and working space has dominating term as functions of $d$ and $p$. The coreset size also has major contributing factor which is $\epsilon^{-5}$.
+
+Now we propose our second algorithm, where we feed the output of \online~to \mrlw~method. Here every incoming row is fed to \online, which quickly computes a sampling probability and based on which the row gets sampled. Now, if it gets sampled, then we pass it to the \mrlw~method, which returns the final coreset. The entire algorithm gets an improved {\em amortized} update time compared to \mrlw~and improved sampling complexity compared to \online. We call this algorithm \online+\mrlw~and summarize its guarantees in the following theorem.
+% 
+\begin{theorem}{\label{thm:improvedStream-MR}}
+ Given $\*A \in \~R^{n \times d}$ whose rows are given to \online+\mrlw~in streaming manner. It requires $O(d^{2})$ amortized update time and uses working space of $((1-2/p)^{11}d^{p/2}\epsilon^{-5}\log^{11} n)$ to return a coreset $\*C$ of size $((1-2/p)^{10}d^{p/2}\epsilon^{-5}\log^{10} n)$ such that with at least $0.99$ probability, $\*C$ satisfies both $p$-order tensor contraction and $\ell_{p}$ subspace embedding as in equations \eqref{eq:contract} and \eqref{eq:lp}.
+\end{theorem}
+% 
+\begin{proof}\label{proof:improvedStream-MR}
+ Here the data is coming in streaming sense. The first method \online~filters out the rows with small sensitivity scores and only the sampled rows (high sensitivity score) are passed to \mrlw. Here the \online~ensures that \mrlw~only gets $\tilde{O}(n^{1-2/p}d)$, hence the amortized update time is same as that of \online, i.e. $O(d^{2})$. Now similar to the above proof \ref{proof:improvedStream-MR}, by the \mrlw~from section 7 of \cite{har2004coresets} we set $M=O(d^{p/2}(\log d)\epsilon^{-5})$. The method returns $\*Q_{i}$ as the $(1 + \delta_{i})$ coreset for the partition $\*P_{i}$ where $|\*P_{i}|$ is either $2^{i}M$ or $0$, here $\rho_{j} = \epsilon/(c(j+1)^{2})$ such that $1+\delta_{i} = \prod_{j=0}^{i} (1 + \rho_{j}) \leq 1 + \epsilon/2, \forall j \in \lceil \log n \rceil$. Thus we have $|\*Q_{i}|$ is $O(d^{p/2}(\log d)(i+1)^{10}\epsilon^{-5})$. Hence the total working space is $O((1-2/p)^{11}d^{p/2}(\log^{11} n)(\log d)\epsilon^{-5})$. So finally \online+\mrlw~returns a coreset $\*Q$ of $O((1-2/p)^{10}d^{p/2}(\log^{10} n)(\log d)\epsilon^{-5})$ rows.
+\end{proof}
+% 
+This is an improved streaming algorithm which gives the same guarantee as lemma \ref{lemma:Stream-MR} but using very less amortized update time. Hence asymptotically, we get an improvement in the overall run time of the algorithm and yet get a coreset which is smaller than that of \online. Similar to \mrlw, \online+\mrlw~also ensures $\ell_{p}$ subspace embedding for real $p \geq 2$.
+It is important to note that we could improve the run time of the streaming result because our \online~can be used in an online manner, which returns a sub-linear size coreset (i.e., $o(n)$) and its update time is less than the amortized update time of \mrlw.
+Note that \online+\mrlw~is a streaming algorithm, whereas \online~or the next algorithm that we propose, works even in the restricted streaming setting. 
+% 
+\subsection{\kernelfilter}
+Now we discuss our second module which is also a streaming algorithm for the tensor contraction guarantee as equation \eqref{eq:contract}. First we give a reduction from $p$-order function to $q$-order function, where $q \leq 2$. For even valued $p$, $(\grave{\*x},\grave{\*y})$ are same as $(\acute{\*x},\acute{\*y})$. So we define $|\*x^{T}\*y|^{p} = |\acute{\*x}^{T}\acute{\*y}|^{2}$, same as \cite{schechtman2011tight}. For odd value $p$, $(\grave{\*x},\grave{\*y})$ are not same as $(\acute{\*x},\acute{\*y})$ and we define $|\*x^{T}\*y|^{p} = |\acute{\*x}^{T}\acute{\*y}|^{2p/(p+1)}$. For completeness we state the following lemma for both even and odd value $p$.
+% 
+\begin{lemma}{\label{lemma:kernel}}
+ For an integer value $p \geq 2$, a vector $\*x \in \~R^{d}$ can be transformed to $(\grave{\*x}$ and $\acute{\*x})$ such that for any two d-dimensional vectors $\*x$ and $\*y$ with their similar transformations we get,
+ \[|\*x^{T}\*y|^{p} = |\grave{\*x}^{T}\grave{\*y}|\cdot|\acute{\*x}^{T}\acute{\*y}| = 
+ \begin{cases}
+  |\acute{\*x}^{T}\acute{\*y}|^{2}  & \quad \text{if } p \mbox{ even}\\
+  |\acute{\*x}^{T}\acute{\*y}|^{2p/(p+1)}  & \quad \text{if } p\ \mbox{odd}\\
+  \end{cases}\]
+\end{lemma}
+% 
+\begin{proof}{\label{proof:kernel}}
+The term $|\*x^{T}\*y|^{p}=|\*x^{T}\*y|^{\lfloor p/2 \rfloor}|\*x^{T}\*y|^{\lceil p/2 \rceil}$. We define $|\*x^{T}\*y|^{\lfloor p/2 \rfloor} = |\grave{\*x}_{i}^{T}\grave{\*y}| = |\langle \*x \otimes^{\lfloor p/2 \rfloor}, \*y \otimes^{\lfloor p/2 \rfloor} \rangle|$ and $|\*x^{T}\*y|^{\lceil p/2 \rceil} = |\acute{\*x}_{i}^{T}\acute{\*y}| = |\langle \*x \otimes^{\lceil p/2 \rceil}, \*y \otimes^{\lceil p/2 \rceil} \rangle|$. Here the $\grave{\*x}$ and $\acute{\*x}$ are the higher dimensional representation of $\*x$ and similarly $\grave{\*y}$ and $\acute{\*y}$ are defined from $\*y$. For even valued $p$ we know $\lfloor p/2 \rfloor=\lceil p/2 \rceil$, so for simplicity we write as $|\*x^{T}\*y|^{p/2} = |\acute{\*x}_{i}^{T}\acute{\*y}|$. Hence we get $|\*x^{T}\*y|^{p} = |\langle \*x \otimes^{p/2}, \*y \otimes^{p/2} \rangle|^{2} = |\acute{\*x}^{T}\acute{\*y}|^{2}$ which is same as in \cite{schechtman2011tight}. Here the vector $\acute{\*x}$ is the higher dimensional vector, where $\acute{\*x} = \mbox{vec}(\*x \otimes^{p/2}) \in \~R^{p/2}$ and similarly $\acute{\*y}$ is also defined from $\*y$. Now for odd value of $p$ we have $\grave{\*x} = \mbox{vec}(\*x \otimes^{(p-1)/2}) \in \~R^{(p-1)/2}$ and $\acute{\*x} = \mbox{vec}(\*x \otimes^{(p+1)/2}) \in \~R^{(p+1)/2}$. Similarly $\grave{\*y}$ and $\acute{\*y}$ are defined from $\*y$. Further note that $|\grave{\*x}^{T}\grave{\*y}| = |\acute{\*x}^{T}\acute{\*y}|^{(p-1)/(p+1)}$ which gives $|\*x^{T}\*y|^{p} = |\langle \*x \otimes^{(p-1)/2}, \*y \otimes^{(p-1)/2} \rangle|\cdot|\langle \*x \otimes^{(p+1)/2}, \*y \otimes^{(p+1)/2} \rangle| = |\grave{\*x}^{T}\grave{\*y}|\cdot|\acute{\*x}^{T}\acute{\*y}| = |\acute{\*x}^{T}\acute{\*y}|^{2p/(p+1)}$. 
+\[|\*x^{T}\*y|^{p} =
+  \begin{cases}
+  |\acute{\*x}^{T}\acute{\*y}|^{2}  & \quad \text{for even } p \\
+  |\acute{\*x}^{T}\acute{\*y}|^{2p/(p+1)}  & \quad \text{for odd } p
+  \end{cases}
+\]
+\end{proof}
+% 
+Here the novelty is in the kernelization for the odd value $p$. 
+
+Now we give a streaming algorithm which is in the same spirit of \online. For every incoming row $\*a_{i}$, it computes the sampling probability based on its kernelized row $\acute{\*a}_{i}$ and the counterpart of the previously seen rows. As the row $\acute{\*a}_{i}$ only depends on $\*a_{i}$, this algorithm can also be used in an online setting as well. 
+So for every incoming row based on the value of $p$ our algorithm converts the $d$ dimensional vector into its corresponding higher dimensional vectors before deciding its sampling complexity. 
+Since we give a sampling based coreset, it retains the structure of the input data. So one need not require to kernelize $\*x$ into its corresponding higher dimensional vector. Instead, one can use the same $\*x$ on the sampled coreset to compute the desired operation. We call it \kernelfilter~and give it as algorithm~\ref{alg:slowOnline}.
+% 
+\begin{algorithm}[htpb]
+\caption{\kernelfilter}{\label{alg:slowOnline}}
+\begin{algorithmic}
+\REQUIRE Streaming rows $\*a_{1}, \*a_{2}, _{\cdots}, \*a_{n}$, $r>1, p\geq2$
+\ENSURE Coreset $\*C$ satisfying eqn \eqref{eq:contract} and \eqref{eq:lp} w.h.p.
+% \IF{$p$ is odd}
+\STATE $\acute{\*M} = \acute{\*M}_{inv} = 0^{d^{\lceil p/2 \rceil} \times d^{\lceil p/2 \rceil}}; L=0; \*C= \emptyset$
+% \STATE $\grave{\*Q} = \mbox{orthonormal-column-basis of }\grave{\*M}$
+\STATE $\acute{\*Q} = \mbox{orthonormal-column-basis}(\acute{\*M})$
+\WHILE {$i \leq n$}
+\STATE $\acute{\*a}_{i} = \mbox{vec}(\*a_{i}\otimes^{\lceil p/2 \rceil})$
+% \STATE $[\grave{e}_{i}, \grave{\*M}, \grave{\*Q}]$ = OnlineScore($\grave{\*a}_{i},\grave{\*M},\grave{\*Q},p,r$)
+\STATE $[\acute{e}_{i}, \acute{\*M}, \acute{\*M}_{\mbox{inv}}, \acute{\*Q}] = \oscore(\acute{\*a}_{i},\acute{\*M},\acute{\*M}_{\mbox{inv}},\acute{\*Q})$
+% \STATE $\acute{l}_{i} = (\acute{e}_{i})^{1/2}$
+\IF{($p$ is {\em even})}
+    \STATE $\tilde{l}_{i} = (\acute{e}_{i})$
+\ELSE
+    \STATE $\tilde{l}_{i} = (\acute{e}_{i})^{p/(p+1)}$
+\ENDIF
+\STATE $L = L+\tilde{l}_{i}; p_{i} = \min\{r\tilde{l}_{i}/L,1\}$
+\STATE Sample $\*a_{i}/\sqrt[p]{p_{i}}$ in $\*C$ with probability $p_{i}$
+\ENDWHILE
+% \ENDIF
+\end{algorithmic}
+\end{algorithm}
+% 
+We summarize the guarantees of \kernelfilter~in the following two theorems.
+\begin{theorem}{\label{thm:slowOnline}}
+ Given $\*A \in \~R^{n \times d}$ whose rows are coming in a streaming manner and an \textbf{even} value $p$, the \kernelfilter~selects a set $\*C$ of size $O\Big(\frac{d^{p/2}k}{\epsilon^{2}}\big(1+p(\log \|\*A\| - d^{-p/2}\min_{i}\log \|\*a_{i}\|\big)\Big)$ using working space and update time $O(d^{p})$. Suppose $\*Q$ is a fixed $k$-dimensional subspace, then with probability at least $0.99, \epsilon > 0, \forall \*x \in \*Q$ we have $\*C$ satisfying both $p$-order tensor contraction and $\ell_{p}$ subspace embedding as equations \eqref{eq:contract} and \eqref{eq:lp} respectively.
+\end{theorem}
+% 
+\begin{theorem}{\label{thm:slowOnlineOdd}}
+ Given $\*A \in \~R^{n \times d}$ whose rows are coming in a streaming manner and an \textbf{odd} integer $p$, $p\ge3$, the algorithm \kernelfilter~selects a set $\*C$ of size $O\Big(\frac{n^{1/(p+1)}d^{p/2}k}{\epsilon^{2}}\big(1+(p+1)(\log \|\*A\|-d^{-\lceil p/2 \rceil}\min_{i}\log \|\*a_{i}\|)\big)^{p/(p+1)}\Big)$ using working space and update time $O(d^{p+1})$. Suppose $\*Q$ is a fixed $k$-dimensional subspace, then with probability at least $0.99, \epsilon > 0, \forall \*x \in \*Q$ we have $\*C$ satisfying both $p$-order tensor contraction and $\ell_{p}$ subspace embedding as equations \eqref{eq:contract} and \eqref{eq:lp} respectively.
+\end{theorem}
+% 
+Here the novelty is in the odd order case is the way we kernelize the streaming rows. We kernelize it in such way that when we go from $p$ order terms $|\*a_{i}^{T}\*x|^{p}$ to $q$ order term $|\acute{\*a}_{i}^{T}\acute{\*x}|^{q}$, we ensure $q<2$ and yet it is closest to $2$. Due to this, we get the smallest possible factor of $n$ in the final coreset size.
+The working space and the computation time of \kernelfilter~is more than that of \online, i.e., it is a function of $d$ and $p$. However, note that compare to \online, the \kernelfilter~returns an asymptotically smaller coreset. This is because the $\tilde{l}_{i}$ gives a tighter upper bound of the online sensitivity score compared to what \online~gives. The final coreset size from \kernelfilter~has no factor of $n$ for even value $p$, and there is a small factor of $n$ for odd value $p$, which decreases as $p$ increases.
+We discuss the proof of the above two theorems along with its supporting lemmas in section \ref{sec:proofs}.
+% 
+\subsection{\online+\kernelfilter}
+Here we briefly sketch our fourth algorithm.
+We use our \online~algorithm along with \kernelfilter~to give a streaming algorithm that benefits both in space and time. For every incoming row first the \online~quickly decides its sampling probability and samples according to it which is then passed to \kernelfilter~which returns the final coreset. Now we state the guarantee of \online+\kernelfilter~in the following theorem.
+\begin{theorem}{\label{thm:improvedOnlineCoreset}}
+ Consider a matrix $\*A \in \~R^{n \times d}$ whose rows are coming one at a time and feed to the algorithm \online+\kernelfilter, which takes $O(d^{2})$ amortized update time and uses $O(d^{p+1})$ working space for odd $p$ and $O(d^{p})$ for even to return $\*C$. Suppose $\*Q$ is a $k$-dimensional query space, such that with at least $0.99$ probability, $\epsilon > 0, \forall \*x \in \*Q$, $\*C$ satisfies both $p$-order tensor contraction and $\ell_{p}$ subspace embedding as equations \eqref{eq:contract} and \eqref{eq:lp} respectively. With $\*a_{\min} = \text{arg}\min_{i}\|\*a_{i}\|$ the size of $\*C$ is as follows for integer $p \geq 2$:
+ \begin{itemize}
+    \item $p$ even: $O\big(\frac{d^{p/2}k}{\epsilon^{2}}(1+p(\log \|\*A\|-d^{-p/2} \log \|\*a_{\min}\|))\big)$
+    \item $p$ odd: $O\big(\frac{n^{(p-2)/(p^{2}+p)}d^{p/2+1/4}k^{5/4}}{\epsilon^{2}}(1+(p+1)(\log \|\*A\|-d^{-\lceil p/2 \rceil}\log \|\*a_{\min}\|))^{p/(p+1)}\big)$
+ \end{itemize}
+%  Note: For integer $p \geq 2$, the factor $n^{(p-2)/(p^{2}+p)}$ in the odd $p$ case can be upper bounded by $n^{1/10}$ and in general it is always $o(n^{1/(p+3)})$.
+\end{theorem}
+% 
+\begin{proof}
+ As every incoming row is first passed through the \online~and the sampled rows are further fed to \kernelfilter, hence by theorem \ref{thm:Online}, \online~passes $\tilde{O}(n^{1-2/p}dk)$ rows to \kernelfilter, for some constant distortion (say $1/2$). Now by theorem \ref{thm:slowOnline} the algorithm \kernelfilter~returns the final coreset of size $O\Big(\frac{n^{(p-2)/(p^2+p)}d^{(p/2+1/4)}k^{5/4}}{\epsilon^{2}}\big(1+(p+1)(\log \|\*A\|-d^{\lceil p/2 \rceil}\min_{i}\log \|\*a_{i}\|)\big)^{p/(p+1)}\Big)$ for odd value $p$. This is because the \kernelfilter~has a factor of $n$ in its coreset size for the odd value $p$. For even value $p$ as the coreset size from \kernelfilter~is independent of $n$, hence the final coreset size in this case is same as what \kernelfilter~returns. The amortized update time is $O(d^2)$, same as the update time of \online~as it sees every incoming row. Further the working space is $O(d^{p+1})$ for odd value $p$ and $O(d^{p})$ for even value $p$, which is same as what \kernelfilter~uses.
+ 
+ Note that at $p=5$, $n^{(p-2)/(p^{2}+p)} = n^{1/10}$ and every other integer $p \geq 2$ is $o(n^{1/10})$.
+\end{proof}
+Further unlike \online~in this algorithm the factor of $n$ gradually decreases with increase in $p$. Note that for even value $p$ \online+\kernelfilter~returns a coreset with smallest sampling complexity.
+% 
+\subsection{\online+\mrlw+\kernelfilter}
+Here we propose the fifth algorithm \online+\mrlw+\kernelfilter, to get a coreset which achieves both better sampling complexity as well as amortized update time for odd value $p$. The benefit of this that \online~quickly returns $\tilde{o}(n)$ size coreset. Now since the expected coreset size still has a factor of $n$ which cannot be removed by \kernelfilter, hence to remove this factor we pass every sampled row from \online~to \mrlw. Finally, we feed the sample from \mrlw~to \kernelfilter~for final coreset. We state the guarantee of the algorithm in the following theorem.
+\begin{theorem}{\label{thm:lflwkf}}
+  Consider $\*A \in \~R^{n \times d}$ whose rows are coming one at a time. For odd value $p$, the algorithm \online+\mrlw+\kernelfilter~takes $O(d^{2})$ amortized update time and uses $O(d^{p+1})$ working space to return $\*C$ such that with at least $0.99$ probability, $\epsilon > 0, \forall \*x \in \*Q$, $\*C$ satisfies both $p$-order tensor contraction and $\ell_{p}$ subspace embedding as equations \eqref{eq:contract} and \eqref{eq:lp} respectively. The size of $C$ is as follows for integer $p \ge 2$ is $O\Big(\frac{d^{p/2+1/2}k^{5/4}}{\epsilon^{2}}\big(1+(p+1)(\log \|\*A\|-d^{-\lceil p/2 \rceil}\min_{i}\log \|\*a_{i}\|)\big)^{p/(p+1)}\Big)$.
+\end{theorem}
+% 
+\begin{proof}{\label{proof:lflwkf}}
+ As every incoming row is first passed through the \online~and the sampled rows are further fed to \mrlw, which then passes its sampled rows to \kernelfilter. Here by theorem \ref{thm:Online} \online~passes $\tilde{O}(n^{1-2/p}dk)$ rows to \mrlw, for some constant distortion (say $8/10$). Now by a similar theorem \ref{thm:improvedStream-MR}, \mrlw~will return a new coreset of size $\tilde{O}(d^{p/2}k)$ which ensures another constant distortion (say $8/10$). Now further when the sampled rows from \mrlw~passed through \kernelfilter~it returns the final coreset of size $O\Big(\frac{d^{(p/2+1/2)}k^{5/4}}{\epsilon^{2}}\big(1+(p+1)(\log \|\*A\|-d^{\lceil p/2 \rceil}\min_{i}\log \|\*a_{i}\|)\big)^{p/(p+1)}\Big)$ for the odd value $p$. The amortized update time is $O(d^2)$ same as the update time of \online~as it sees every incoming rows. Further the working space is $O(d^{p+1})$ which is same as what \kernelfilter~uses.
+\end{proof}
+% 
+\subsection{\mrlf}{\label{sec:streaminglf}}
+Here we propose our final algorithm. We give a streaming algorithm which does the same task as \online, but takes $\tilde{O}(d_{\zeta})$ update time, where $d_{\zeta} = \max_{i\leq n}(\mbox{nnz}(\*a_{i})) \leq d$. Given a matrix $\*A \in \~R^{n \times d}$ and $p \geq 2$, note that the offline sensitivity scores for $p$-order tensor contraction or $\ell_{p}$ subs $\forall i \in [n]$ is,
+\begin{eqnarray*}
+s_{i} &=& \sup_{\*x} \frac{|\*a_{i}^{T}\*x|^{p}}{\sum_{j\leq n} |\*a_{j}^{T}\*x|^{p}} \\
+&\leq& n^{p/2-1} \*a_{i}^{T}(\*A^{T}\*A)^{\dagger}\*a_{i} \\
+&=& n^{p/2-1}\|\*u_{i}\|^{2} \\
+&=& l_{i}
+\end{eqnarray*}
+Here $[\*U,\Sigma,\*V] = \mbox{SVD}(\*A)$ and $\*u_{i}$ is the $i^{th}$ row of $\*U$. The above inequality can be verified using a similar analysis of lemma \ref{lemma:onlineSensitivityBound}. Now with sampling probability $p_{i} = \min\{1,rl_{i}/L\}$ for the $i^{th}$ row, where $L = \sum_{i\leq n} l_{i}$ and $r$ is $O(kL\epsilon^{-2})$, our coreset $\*C$ of size $O(n^{1-2/p}dk\epsilon^{-2})$ achieves both $p$-order tensor contraction and $\ell_{p}$ subspace embedding as in equation \eqref{eq:contract} and \eqref{eq:lp}. The value of $r$ can be verified using a similar analysis of lemma \ref{lemma:onlineGuarantee}.
+
+Note that $\*U$ is the orthonormal column basis of $\*A$. The running time of the algorithm is dominated by the computation time of $\*U$. Clarkson et.al. \cite{woodruff2014sketching, clarkson2017low} showed that there is a randomized technique to get an constant approximation of $\|\*u_{i}\|, \forall i \in [n]$. The randomized algorithm takes $O(\mbox{nnz}(A)(\log n) + d^{3})$ time. Now we propose a streaming algorithm which uses \cite{har2004coresets} merge-and-reduce method on the above mentioned offline algorithm. We call it \mrlf~and summarize its guarantees in the following theorem.
+% 
+\begin{theorem}{\label{thm:stream-LF}}
+ Given a set of $n$ streaming rows $\{\*a_{i}\}$, the \mrlf~returns a coreset $\*C$. For integer $p \geq 2$, a fixed $k$-dimensional subspace $\*Q$, with probability $0.99$ and $\epsilon > 0$, $\forall \*x\in \~R^{d}$, $\*C$ satisfies $p$-order tensor contraction and $\ell_{p}$ subspace embedding as in equations \eqref{eq:contract} and \eqref{eq:lp}.
+
+ It requires $\tilde{O}(d_{\zeta})$ amortized update time and uses $O(n^{1-2/p}dk\epsilon^{-2}\log^{5} n)$ working space to return a coreset $\*C$ of size $O(n^{1-2/p}dk\epsilon^{-2}\log^{4} n)$.
+\end{theorem}
+% 
+\begin{proof}\label{proof:stream-LF}
+ Here the data is coming in streaming manner which is fed to \mrlf. We know that $\*A \in \~R^{n \times d}$ it takes $O(\mbox{nnz}(\*A)(\log n) + d^{3})$ time to return a coreset $\*Q$ of size $O(n^{1-2/p}dk\epsilon^{-2})$. Note that for the \mrlf~in section 7 of \cite{har2004coresets} we set $M=O(n^{1-2/p}dk\epsilon^{-2})$. The method returns $\*Q_{i}$ as the $(1 + \delta_{i})$ coreset for the partition $\*P_{i}$ where $|\*P_{i}|$ is either $2^{i}M$ or $0$, here $\rho_{j} = \epsilon/(c(j+1)^{2})$ such that $1+\delta_{i} = \prod_{j=0}^{i} (1 + \rho_{j}) \leq 1 + \epsilon/2, \forall j \in \lceil \log n \rceil$. Thus we have $|\*Q_{i}|$ is $O(|\*P_{i}|^{1-2/p}dk(i+1)^{4}\epsilon^{-2})$. In \mrlf~the method reduce sees at max $\log n$ many coresets $\*Q_{i}$ at any point of time. Hence the total working space is $O(n^{1-2/p}dk(\log^{4} n)\epsilon^{-2})$. With an argument similar to \mrlw, here the offline line version of \online~is not run on entire $\*P_{i}$ to get a coreset $\*Q_{i}$. Instead it is run on $\cup_{j \leq i} \*Q_{j}$ which is $O(M(i+1)^{4}d_{\zeta})$, where $d_{\zeta} = \max_{i \leq n} \mbox{nnz}(\*a_{i})$
+ Now the amortized time spent per update is,
+ \begin{eqnarray*}
+  \sum_{i=1}^{\lceil \log (n/M) \rceil} \frac{1}{2^{i}M}O(M(i+1)^{4}d_{\zeta}(\log \*Q_{i}) + d^{3}) \leq O(d_{\zeta}\log n)
+ \end{eqnarray*}
+So the finally the algorithm uses $O(n^{1-2/p}dk(\log^{5} n)\epsilon^{-2})$ working space and returns $\*Q$ as the final coreset of $O(n^{1-2/p}dk(\log^{4} n)\epsilon^{-2})$ rows and uses $O(d_{\zeta}\log n)$ amortized update time.
+\end{proof}
+% 
+So in all our previous algorithms, wherever the online algorithm (\online) is used in the first phase, one can use the streaming algorithm (\mrlf) and get an improve the amortized update time of $\tilde{O}(d_{\zeta})$ from $O(d^{2})$. Thereby the the algorithms such as \mrlf+\mrlw, \mrlf+\kernelfilter, \mrlf+\mrlw+\kernelfilter~gets an improved amortized update time of $\tilde{O}(d_{\zeta})$ but it uses a working space of $\tilde{O}(n^{1-2/p}dk\epsilon^{-2})$. For the simplicity of \online, we give its streaming version as \mrlf~which has the best amortized update time.
+% 
+\subsection{$p=2$ case}
+In the case of a matrix, i.e., $p=2$ the \online~and \kernelfilter~are just the same. This is because, for every incoming row $\*a_{i}$, the kernelization returns the same row itself. Hence \kernelfilter's sampling process is exactly the same as \online. While we use the sensitivity framework, for $p=2$, our proofs are novel in the following sense:
+\begin{enumerate}
+ \item When creating the sensitivity scores in the online setting, we do not need
+ to use a regularization term as~\cite{cohen2016online}, instead relying on a novel analysis when the matrix is rank deficient. Hence we get a relative error bound without making the number of samples depend on the smallest non zero singular value (which~\cite{cohen2016online} need for online row sampling for matrices).
+ \item We do not need to use a martingale based argument, since the sampling probability of a row does not depend on the previous samples.
+\end{enumerate}
+Our algorithm gives a coreset which preserves relative error approximation (i.e., subspace embedding). Note that lemma 3.5 of \cite{cohen2016online} can be used to achieve the same but it requires the knowledge of $\sigma_{\min}(\*A)$ (smallest singular value of $\*A$). There we need to set $\delta = \epsilon\sigma_{min}(\*A)$ which gives sampling complexity as $O(d(\log d)(\log \kappa(\*A))/\epsilon^{2})$. Our algorithm gives relative error approximation even when $\kappa(\*A) = 1$, which is not clear in \cite{cohen2016online}. 
+% We state our guarantees in the appendix A.5. %~\ref{app:matrix}.
+First we give a corollary stating one would get by following the analysis mentioned above, i.e. by using the scalar Bernstein inequality~\ref{thm:bernstein}.
+\begin{corollary}\label{lem:matrixcoreset}
+ Given a matrix $\*A \in \~R^{n\times d}$ with rows coming one at a time, for $p=2$ our algorithm uses $O(d^{2})$ update time and samples $O\Big(\frac{d}{\epsilon^{2}}\big(d+d\log\|\*A\|-\min_{i}\log \|\*a_{i}\|\big)\Big)$ rows and preserves the following with probability at least $0.99$, $\forall \*x \in \~R^{d}$,
+ \begin{equation*}
+  (1-\epsilon)\|\*A\*x\|^{2} \leq \|\*C\*x\|^{2} \leq (1+\epsilon)\|\*A\*x\|^{2}
+ \end{equation*}
+\end{corollary}
+% 
+Just by using Matrix Bernstein inequality~\cite{tropp2011freedman} we can slightly improve the sampling complexity from factor of $O(d^{2})$ to factor of $O(d\log d)$. For simplicity we modify the sampling probability to $p_{i} = \min\{r\tilde{l}_{i},1\}$ and get the following guarantee.
+\begin{theorem}{\label{thm:improvedMatrixCoreset}}
+ The above modified algorithm samples $O\Big(\frac{d\log d}{\epsilon^{2}}\big(1+\log\|\*A\|-d^{-1}\min_{i} \log \|\*a_{i}\|\big)\Big)$ rows and preserves the following with probability at least $0.99$, $\forall \*x \in \~R^{d}$
+ \begin{align*}
+  (1-\epsilon)\|\*A\*x\|^{2} \leq \|\*C\*x\|^{2} \leq (1+\epsilon)\|\*A\*x\|^{2}
+ \end{align*}
+\end{theorem}
+\begin{proof}{\label{proof:improvedMatrixCoreset}}
+We prove this theorem in 2 parts. First we show that sampling $\*a_{i}$ with probability $p_{i}=\min\{r\tilde{l}_{i},1\}$ where $\tilde{l}_{i} = \*a_{i}^{T}(\*A_{i}^{T}\*A_{i})^{\dagger}\*a_{i}$ preserves $\|\*C^{T}\*C\| \leq (1\pm \epsilon)\|\*A^{T}\*A\|$. Next we give the bound on expected sample size.
+
+For the $i^{th}$ row $\*a_{i}$ we define, $\*u_{i} = (\*A^{T}\*A)^{-1/2}\*a_{i}$ and we define a random matrix $\*W_{i}$ corresponding to it, 
+\[ \*W_{i} =
+  \begin{cases}
+    (1/p_{i} - 1)\*u_{i}\*u_{i}^{T}  & \quad \text{with probability } p_{i}\\
+    -\*u_{i}\*u_{i}^{T} & \quad \text{with probability } (1-p_{i})
+  \end{cases}
+\]
+Now we have,
+\begin{eqnarray*}
+ \tilde{l}_{i} &=& \*a_{i}^{T}(\*A_{i-1}^{T}\*A_{i-1}+\*a_{i}\*a_{i}^{T})^{\dagger}\*a_{i} \\
+ &\geq& \*a_{i}^{T}(\*A^{T}\*A)^{\dagger}\*a_{i} \\
+ &=& \*u_{i}^{T}\*u_{i}
+\end{eqnarray*}
+For $p_{i} \geq \min\{r\*u_{i}^{T}\*u_{i},1\}$, if $p_{i} = 1$, then $\|\*W_{i}\| = 0$, else $p_{i} = r\*u_{i}^{T}\*u_{i} < 1$. So we get $\norm{\*W_{i}} \leq 1/r$. 
+Next we bound $\~E[\*W_{i}^{2}]$, which is,
+\begin{eqnarray*}
+ \~E[\*W_{i}^{2}] &=& p_{i}(1/p_{i}-1)^{2}(\*u_{i}\*u_{i}^{T})^{2}+(1-p_{i})(\*u_{i}\*u_{i}^{T})^{2} \\
+ &\preceq& (\*u_{i}\*u_{i}^{T})^{2}/p_{i} \\
+ &\preceq& (\*u_{i}\*u_{i}^{T})/r
+\end{eqnarray*}
+Let $\*W = \sum_{i=1}^{n} \*W_{i}$, then variance of $\|\*W\|$ 
+\begin{eqnarray*}
+\mbox{var}(\norm{\*W}) &=& \sum_{i=1}^{n}\mbox{var}(\|\*W_{i}\|) \\
+&\leq& \sum_{i=1}^{n} \~E[\|\*W_{i}\|^{2}] \\ 
+&\leq& \bigg\lVert\sum_{j=1}^{n} \*u_{j}\*u_{j}^{T}/r \bigg\rVert \\
+&\leq& 1/r
+\end{eqnarray*}
+Next by applying matrix Bernstein theorem \ref{thm:matrixBernstein} with appropriate $r$ we get,
+\begin{equation*}
+ \mbox{Pr}(\norm{\*X}\geq\epsilon) \leq d \exp\bigg(\frac{-\epsilon^{2}/2}{2/r+\epsilon/(3r)}\bigg)\leq 0.01
+\end{equation*}
+This implies that our algorithm preserves spectral approximation with at least $0.99$ probability by setting $r$ as $O(\log d/\epsilon^{2})$.
+
+Then the expected number of samples to preserve $\ell_{2}$ subspace embedding is $O(\sum_{i=1}^{n}\tilde{l}_{i}(\log d)/\epsilon^{2})$. Now from lemma \ref{lemma:onlineSummationBound} we know that for $p=2, \sum_{i=1}^{n}\tilde{l}_{i}$ is $O(d(1+\log \|\*A\|) - \min_{i} \|\*a_{i}\|)$. Finally to get $\mbox{Pr}(\norm{\*W}\geq\epsilon) \leq 0.01$ the algorithm samples $O\Big(\frac{d\log d}{\epsilon^{2}}\big(1+\log\|\*A\| - d^{-1}\min_{i}\log \|\*a_{i}\|\big)\Big)$ rows.
+\end{proof}

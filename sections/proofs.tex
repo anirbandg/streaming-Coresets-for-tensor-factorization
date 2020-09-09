@@ -1,0 +1,309 @@
+\section{Proofs}{\label{sec:proofs}}
+In this section we prove our main theorems. While doing so whenever needed we also state and prove the supporting lemmas for them. %~\ref{sec:appendix}.
+\subsection{\online}
+Here we give a sketch of the proof for theorem \ref{thm:Online}. For ease of notation, the rows are considered numbered according to their order of arrival. The supporting lemmas are for the online setting, which also works for the streaming case.
+% When the $i^{th}$ row arrives, the algorithm has to decide whether to select it or not. 
+% Clearly, at any intermediate step, we cannot compute the offline sensitivity scores. 
+We show that it is possible to generalize the notion of sensitivity for the online setting as well as give an upper bound to it. We define the {\em online sensitivity} of any $i^{th}$ row $\*a_{i}^{T}$ as: 
+\begin{equation*}
+ \sup_{\*x\in \*Q}\frac{|\*a_{i}^T\*x|^{p}}{\sum_{j=1}^{i}|\*a_{j}^T\*x|^{p}} 
+\end{equation*}
+which can also be redefined as:
+\begin{equation*}
+ \sup_{\*y\in \*Q'}\frac{|\*u_{i}^T\*y|^{p}}{\sum_{j=1}^{i}|\*u_{j}^T\*y|^{p}}
+\end{equation*}
+where $\*Q'= \{\*y| \*y = \Sigma \*V^T \*x, \*x\in \*Q\}$, svd$(\*A) = \*U\Sigma \*V^{T}$ and $\*Q$ is the query space. Here $\*u_{i}^{T}$ is the $i^{th}$ row of $\*U$. Notice that the denominator now contains a sum only over the rows that have arrived. 
+We note that while online sampling results often need the use of martingales as an analysis tool, e.g.,~\cite{cohen2016online}, in our setting, the sampling probability of each row does depend on the previous rows, but not on whether they were sampled or not. So, the sampling decision
+of each row is independent. Hence, the application of Bernstein's inequality \ref{thm:bernstein}
+suffices.
+
+We first show that the $\tilde{l}_{i}$, as defined in \online~used to compute the sampling probability $p_{i}$, are upper bounds to the online sensitivity scores. 
+% 
+\begin{lemma}{\label{lemma:onlineSensitivityBound}}
+ Consider $\*A \in \~R^{n \times d}$, whose rows are provided in a streaming manner to \online. Let $\tilde{l}_i = \min\{i^{p/2-1}(\*a_{i}^T\*M^{\dagger}\*a_{i})^{p/2},1\}$, and $\*M$ is a $d \times d$ matrix maintained by the algorithm. Then $\forall i \in [n]$,  $\tilde{l}_i$ satisfies the following,
+ \begin{equation*}
+  \tilde{l}_i \ge \sup_{\*x}\frac{|\*a_{i}^T\*x|^{p}}{\sum_{j=1}^{i}|\*a_{j}^T\*x|^{p}}
+ \end{equation*}
+  %Here $\*u_{i}$ is the $i^{th}$ row of the orthonormal column space basis $\U$ of $A$.
+\end{lemma}
+% The proof of this lemma is discussed in the appendix A.1.1. %~\ref{proof:onlineSensitivityBound}. 
+\begin{proof}{\label{proof:onlineSensitivityBound}}
+We define the restricted streaming (online) sensitivity scores $\tilde{s}_{i}$ for each row $i$ as follows,
+\begin{eqnarray*}
+ \tilde{s}_{i} &=& \sup_{\*x}\frac{\vert \*a_{i}^{T}\*x\vert^{p}}{\sum_{j=1}^{i}\vert \*a_{j}^{T}\*x\vert^{p}} \\
+ &=& \sup_{\*y}\frac{\vert \*u_{i}^{T}\*y\vert^{p}} {\sum_{j=1}^{i}\vert \*u_{j}^{T}\*y\vert^{p}}
+\end{eqnarray*}
+Here $\*y = \Sigma \*V^{T}\*x$ where $[\*U,\Sigma,\*V] = \mbox{svd}(\*A)$ and $\*u_{i}^{T}$ is the $i^{th}$ row of $\*U$. Now at this $i^{th}$ step we also define $[\*U_{i},\Sigma_{i},\*V_{i}] = \mbox{svd}(\*A_{i})$. So with $\*y = \Sigma_{i} \*V_{i}^{T}\*x$ and $\tilde{\*u}_{i}^{T}$ is the $i^{th}$ row of $\*U_{i}$ we rewrite the above optimization function as follows,
+\begin{eqnarray*}
+ \tilde{s}_{i} &=& \sup_{\*x}\frac{\vert \*a_{i}^{T}\*x\vert^{p}}{\sum_{j=1}^{i}\vert \*a_{j}^{T}\*x\vert^{p}} \\
+ &=& \sup_{\*y}\frac{\vert \tilde{\*u}_{i}^{T}\*y\vert^{p}}{\norm{\*U_{i}\*y}_{p}^{p}} \\ 
+ &=& \sup_{\*y}\frac{\vert \tilde{\*u}_{i}^{T}\*y\vert^{p}}{\vert \tilde{\*u}_{i}^{T}\*y\vert^{p}+\sum_{j=1}^{i-1}\vert \tilde{\*u}_{j}^{T}\*y\vert^{p}}
+\end{eqnarray*}
+Let there be an $\*x^{*}$ which maximizes $\tilde{s}_{i}$. Corresponding to it we have  $\*y^{*} = \Sigma_{i} \*V_{i}^{T}\*x^{*}$. For a fixed $\*x$, let $f(\*x) = \frac{\vert \*a_{i}^{T}\*x\vert^{p}}{\sum_{j=1}^{i}\vert \*a_{j}^{T}\*x\vert^{p}} = \frac{|\*a_{i}^{T}\*x|^{p}}{\|\*A_{i}\*x\|_{p}^{p}}$ and $g(\*y) = \frac{\vert \tilde{\*u}_{i}^{T}\*y\vert^{p}}{\norm{\*U_{i}\*y}_{p}^{p}}$. By assumption we have $f(\*x^{*}) \geq f(\*x), \forall \*x$. 
+
+We prove this by contradiction that $\forall \*y, g(\*y^{*}) \geq g(\*y)$, where $\*y = \Sigma_{i} \*V_{i}^{T}\*x$. Let $\exists \*y'$ such that $g(\*y') \geq g(\*y^{*})$. Then we get $\*x' = \*V_{i}\Sigma_{i}^{-1}\*y'$ for which $f(\*x')\geq f(\*x^{*})$, as by definition we have $f(\*x) = g(\*y)$ for $y = \Sigma_{i}\*V_{i}^{T}\*x$. This contradicts our assumption, unless $\*x' = \*x^{*}$. 
+
+Now to maximize the score, $\tilde{s}_{i}, \*x$ is chosen from the row space of $\*A_{i}$. Next, without loss of generality we assume that $\norm{\*y} = 1$ as we know that if $\*x$ is in the row space of $\*A_{i}$ then $\*y$ is in the row space of $\*U_{i}$. Hence we get $\norm{\*U_{i}\*y} = \norm{\*y} = 1$.
+
+We break denominator into sum of numerator and the rest, i.e. $\norm{\*U_{i}\*y}_{p}^{p} = \vert \tilde{\*u}_{i}^{T}\*y\vert^{p}+\sum_{j=1}^{i-1}\vert \tilde{\*u}_{j}^{T}\*y\vert^{p}$. % So we have $(\~E[\*a_{i}^{T}b])^{2} \leq \~E[(\*a_{i}^{T}b)^{2}] = \parallel b \parallel^{2}$, i.e. $\~E[\*a_{i}^{T}b] \leq \parallel b \parallel$. Now if $b = \*a_{i}$, then $\~E[\*a_{i}^{T}b] \leq \parallel b \parallel = \sqrt{d}$ and $\*a_{i}^{T}b = d$. The sensitivity score of row $i$ is $(sf(i))$ which is defined as follows,
+% 
+Consider the denominator term as $\sum_{j=1}^{i-1}|\tilde{\*u}_{j}^{T}\*y|^{p} \geq f(n)\bigg(\sum_{j=1}^{i-1} |\tilde{\*u}_{j}^{T}\*y|^{2}\bigg)$. From this we estimate $f(n)$ as follows,
+\begin{eqnarray*}
+\sum_{j=1}^{i-1}|\tilde{\*u}_{j}^{T}\*y|^{2} &=& \bigg(\sum_{j=1}^{i-1}|\tilde{\*u}_{j}^{T}\*y|^{2}\cdot 1\bigg) \nonumber \\
+&\stackrel{(i)}{\leq}& \bigg(\sum_{j=1}^{i-1}|\tilde{\*u}_{j}^{T}\*y|^{2p/2}\bigg)^{2/p}\bigg(\sum_{j=1}^{i-1}1^{p/(p-2)}\bigg)^{1-2/p} \\
+&\stackrel{(ii)}{\leq}& \bigg(\sum_{j=1}^{i-1}|\tilde{\*u}_{j}^{T}\*y|^{p}\bigg)^{2/p}\cdot(i)^{1-2/p}
+\end{eqnarray*}
+% 
+Here equation (i) is by holder's inequality, where we have $2/p + 1 - 2/p = 1$. So we rewrite the above term as $\big(\sum_{j=1}^{i-1}|\tilde{\*u}_{j}^{T}\*y|^{p}\big)^{2/p} \big(i\big)^{1-2/p} \geq \sum_{j=1}^{i-1} |\tilde{\*u}_{j}^{T}\*y|^{2} = 1 - |\tilde{\*u}_{i}^{T}\*y|^{2}$. Now substituting this in equation (ii) we get,
+\begin{eqnarray*}
+\bigg(\sum_{j=1}^{i-1}|\tilde{\*u}_{j}^{T}\*y|^{p}\bigg)^{2/p} &\geq& \bigg(\frac{1}{i}\bigg)^{1-2/p} (1 - |\tilde{\*u}_{i}^{T}\*y|^{2})\\
+\bigg(\sum_{j=1}^{i-1}|\tilde{\*u}_{j}^{T}\*y|^{p}\bigg) &\geq& \bigg(\frac{1}{i}\bigg)^{p/2-1}(1 - |\tilde{\*u}_{i}^{T}\*y|^{2})^{p/2}
+\end{eqnarray*}
+So we get $\tilde{s}_{i} \leq \sup_{\*y}\frac{\vert \tilde{\*u}_{i}^{T}\*y\vert^{p}}{\vert \tilde{\*u}_{i}^{T}\*y\vert^{p}+(1/i)^{p/2-1}(1-\vert \tilde{\*u}_{i}^{T}\*y\vert^{2})^{p/2}}$. Note that this function increases with value of $|\tilde{\*u}_{i}^{T}\*y|$, which is maximum when $\*y = \frac{\tilde{\*u}_{i}}{\norm{\tilde{\*u}_{i}}}$, which gives,
+\begin{equation}
+ \tilde{s}_{i} \leq \frac{\norm{\tilde{\*u}_{i}}^{p}}{\norm{\tilde{\*u}_{i}}^{p} + (1/i)^{p/2-1}(1-\norm{\tilde{\*u}_{i}}^{2})^{p/2}} \nonumber
+\end{equation}
+As we know that a function $\frac{a}{a+b} \leq \min\{1,a/b\}$, so we get $\tilde{l}_{i} = \min\{1,i^{p/2-1}\norm{\tilde{\*u}_{i}}^{p}\}$. Note that $\tilde{l}_{i} = i^{p/2-1}\norm{\tilde{\*u}_{i}}^{p}$ when $\norm{\tilde{\*u}_{i}}^{p} < (1/i)^{p/2-1}$.
+\end{proof}
+% 
+Here the scores are similar to leverage scores \cite{woodruff2014sketching} but due to $p$ order and data point coming in online manner \online~charges an extra factor of $i^{p/2-1}$ for every row. Although we have bound on the $\sum_{i}^{n} \tilde{l}_{i}$ from lemma \ref{lemma:onlineSummationBound}, but this factor can be very huge. As $i$ increases which eventually sets many $\tilde{l}_{i} = 1$. Although the $\tilde{l}_{i}$'s are computed very quickly but the algorithm gives a loose upper bound due to the additional factor of $i^{p/2-1}$. Now with these upper bounds we get the following.
+% 
+\begin{lemma}{\label{lemma:onlineGuarantee}}
+Let $r$ provided to \online~be 
+$O(k\epsilon^{-2}\sum_{j=1}^{n}\tilde{l}_{j})$. Let \online~returns a coreset $\*C$. Then with probability at least $0.99$, $\forall \*x \in \*Q$, 
+$\*C$ satisfies the $p$-order tensor contraction as in equation \eqref{eq:contract} and $\ell_{p}$ subspace embedding as in equation \eqref{eq:lp}.
+\end{lemma}
+% The proof of this lemma is given in the appendix A.1.2. %~\ref{proof:onlineGuarantee}. 
+\begin{proof}{\label{proof:onlineGuarantee}}
+ For simplicity, we prove this lemma at the last timestamp $n$. But it can also be proved for any timestamp $t_{i}$, which is why the \online~can also be used in the restricted streaming (online) setting.
+ 
+ Now for a fixed $\*x \in \~R^{d}$ and its corresponding $\*y$, we define a random variables as follows, i.e. the choice \online~has for every incoming row $\*a_{i}^{T}$.
+ \[ w_{i} =
+  \begin{cases}
+    \frac{1}{p_{i}}(\*u_{i}^{T}\*y)^{p}  & \quad \text{with probability } p_{i} \\
+    0 & \quad \text{with probability } (1-p_{i})
+  \end{cases}
+\]
+where $\*u_{i}^{T}$ is the $i^{th}$ row of $\*U$ for $[\*U,\Sigma,\*V] = \mbox{svd}(\*A)$ and $\*y = \Sigma\*V^{T}\*x$. Here we get $\~E[w_{i}] = (\*u_{i}^{T}\*y)^{p}$. In our online algorithm we have defined $p_{i} = \min\{r\tilde{l}_{i}/\sum_{j=1}^{i}\tilde{l}_{j},1\}$ where $r$ is some constant. When $p_{i} \leq 1$, we have
+\begin{eqnarray*}
+ p_{i} &=& r\tilde{l}_{i}/\sum_{j=1}^{i}\tilde{l}_{j} \\
+ &\geq& \frac{r|\*u_{i}^{T}\*y|^{p}}{\sum_{j=1}^{i}\tilde{l}_{j}\sum_{j=1}^{i}|\*u_{j}^{T}\*y|^{p}} \\ 
+ &\geq& \frac{r|\*u_{i}^{T}\*y|^{p}}{\sum_{j=1}^{n}\tilde{l}_{j}\sum_{j=1}^{n}|\*u_{j}^{T}\*y|^{p}}
+\end{eqnarray*}
+As we are analysing a lower bound on $p_{i}$ and both the terms in the denominator are positive so we extend the sum of first $i$ terms to all the $n$ terms. Now to apply Bernstein inequality \ref{thm:bernstein} we bound the term $\vert w_{i} - \~E[w_{i}]\vert \leq b$. Consider the two possible cases,
+ 
+ \textbf{Case 1:} When $w_{i}$ is non zero, then $|w_{i} - \~E[w_{i}]| \leq \frac{|\*u_{i}^{T}\*y|^{p}}{p_{i}} \leq \frac{|\*u_{i}^{T}\*y|^{p}(\sum_{j=1}^{n} \tilde{l}_{j})\sum_{j=1}^{n} |\*u_{j}^{T}\*y|^{p}}{r|\*u_{i}^{T}\*y|^{p}} = \frac{(\sum_{j=1}^{n} \tilde{l}_{j})\sum_{j=1}^{n} |\*u_{j}^{T}\*y|^{p}}{r}$. Note for $p_{i}=1, \vert w_{i} - \~E[w_{i}]\vert = 0$.
+ 
+ \textbf{Case 2:} When $w_{i}$ is $0$ then $p_{i} < 1$. So we have $1 > \frac{r\tilde{l}_{i}}{\sum_{j=1}^{i}\tilde{l}_{j}} \geq \frac{r|\*u_{i}^{T}\*y|^{p}}{(\sum_{j=1}^{n} \tilde{l}_{j})\sum_{j=1}^{n}|\*u_{j}^{T}\*y|^{p}}$. So the term $|w_{i}-\~E[w_{i}] | = |\~E[w_{i}]| = |(\*u_{i}^{T}\*y)^{p}| < \frac{(\sum_{j=1}^{n} \tilde{l}_{j})\sum_{j=1}^{n} |\*u_{j}^{T}\*y|^{p}}{r}$. 
+ 
+ So by setting $b=\frac{(\sum_{j=1}^{n} \tilde{l}_{j})\sum_{j=1}^{n} |\*u_{j}^{T}\*y|^{p}}{r}$ we can bound the term $|w_{i} - \~E[w_{i}]|$. Next we bound the variance of the sum, i.e. $\sum_{i=1}^{n} \tilde{l}_{i}$. Let $\sigma^{2} = \mbox{var}\big(\sum_{i=1}^{n} w_{i}\big) = \sum_{i=1}^{n} \sigma_{i}^{2}$, since every incoming rows are independent of each other and here we consider $\sigma_{i}^{2} = \mbox{var}(w_{i})$
+% (Online) Further we bound the variance of the sum of random variables till $i$. Let $\mbox{var}_{i} = \mbox{var}\bigg(\sum_{j=1}^{i} w_{j}\bigg)$
+ \begin{eqnarray*}
+  \sigma^{2} &=& \sum_{i=1}^{n} \~E[w_{i}^{2}] - (\~E[w_{i}])^{2} \\ 
+  &\leq& \sum_{i=1}^{n}\frac{|\*u_{i}^{T}\*y|^{2p}}{p_{i}} \nonumber \\
+  &\leq& \sum_{i=1}^{n}\frac{|\*u_{i}^{T}\*y|^{2p}(\sum_{k=1}^{n} \tilde{l}_{k})\sum_{j=1}^{n} |\*u_{j}^{T}\*y|^{p}}{r|\*u_{i}^{T}\*y|^{p}} \nonumber \\
+  &\leq& \frac{(\sum_{k=1}^{n} \tilde{l}_{k})(\sum_{j=1}^{n} |\*u_{j}^{T}\*y|^{p})^{2}}{r} \nonumber
+ \end{eqnarray*}
+%  While first inequality is by definition of variance, the second equation is the expected value. The third inequality is for those $i$'s whose corresponding $p_{i}$'s are strictly less than $1$, as variance for $i$'s with $p_{i}=1$ would be $0$. 
+ Note that $\|\*U\*y\|_{p}^{p} = \sum_{j=1}^{n} |\*u_{j}^{T}\*y|^{p}$. Now in Bernstein inequality we set $t = \epsilon \sum_{j=1}^{n} |\*u_{j}^{T}\*y|^{p}$, we get, 
+ \begin{eqnarray*}
+  \mbox{Pr}\bigg(|W - \sum_{j=1}^{n} (\*u_{j}^{T}\*y)^{p}| \geq \epsilon \sum_{j=1}^{n} |\*u_{j}^{T}\*y|^{p}\bigg) &\leq& \exp\bigg(\frac{\big(\epsilon \sum_{j=1}^{n} |\*u_{j}^{T}\*y|^{p}\big)^{2}}{2\sigma^{2}+bt/3}\bigg) \\
+  &\leq& \exp\Bigg(\frac{-r\epsilon^{2}(\|\*U\*y\|_{p}^{p})^{2}}{(\|\*U\*y\|_{p}^{p})^{2}\sum_{j=1}^{n}\tilde{l}_{j}(2+\epsilon/3)}\Bigg) \\
+  &=& \exp\Bigg(\frac{-r\epsilon^{2}}{(2+\epsilon/3)\sum_{j=1}^{n}\tilde{l}_{j}}\Bigg) 
+ \end{eqnarray*}
+ Now to ensure that the above probability at most $0.01, \forall \*x \in \*Q$ we use $\epsilon$-net argument as in \ref{argument:epsNet} where we take a union bound over $(2/\epsilon)^{k}, \*x$ from the net. Note that for our purpose $1/2$-net also suffices. Hence with the union bound over all $\*x$ in $1/2$-net we need to set $r = \frac{2k\sum_{j=1}^{n}\tilde{l}_{j}}{\epsilon^{2}}$, which is $\Big(\frac{2k\sum_{j=1}^{n}\tilde{l}_{j}}{\epsilon^{2}}\Big)$.
+ 
+ Now to ensure the guarantee for $\ell_{p}$ subspace embedding for any $p \geq 2$ as in equation ~\eqref{eq:lp} one can consider the following form of the random variable, 
+ \[ w_{i} =
+  \begin{cases}
+    \frac{1}{p_{i}}|\*u_{i}^{T}\*y|^{p}  & \quad \text{with probability } p_{i} \\
+    0 & \quad \text{with probability } (1-p_{i})
+  \end{cases}
+ \]
+and follow the above proof. Finally by setting $r$ as $O\Big(\frac{k\sum_{j=1}^{n}\tilde{l}_{j}} {\epsilon^{2}}\Big), \forall \*x \in \*Q$ one can get
+\begin{equation*}
+ \mbox{Pr}\bigg(|\|\*C\*x\|_{p}^{p} - \|\*A\*x\|_{p}^{p}| \geq \epsilon \|\*A\*x\|_{p}^{p}\bigg) \leq 0.01
+\end{equation*}
+Since for both the guarantees of equation \eqref{eq:contract} and \eqref{eq:lp} the sampling probability of every incoming row is the same, just the random variables are different, hence for integer valued $p \geq 2$ the same sampled rows preserves both tensor contraction as in equation~\eqref{eq:contract} and $\ell_{p}$ subspace embedding as in equation~\eqref{eq:lp}.
+\end{proof}
+% 
+Note that the above analysis can also be used for $\ell_{p}$ subspace embedding with real $p \geq 2$. Now in order to bound the number of samples, we need a bound on the quantity $\sum_{j=1}^{n}\tilde{l}_{j}$. The analysis is novel because of the way we use matrix determinant lemma for a rank deficient matrix, which is further used to get a telescopic sum for all the terms.
+The following lemma upper bounds the sum.
+\begin{lemma}{\label{lemma:onlineSummationBound}}
+ %Given the rows of matrix $\*A \in \~R^{n \times d}$, coming in an online manner
+ The $\tilde{l}_{i}$ in \online~algorithm which satisfies lemma \ref{lemma:onlineSensitivityBound} and lemma \ref{lemma:onlineGuarantee} has
+ $\sum_{i=1}^{n}\tilde{l}_{i}=O(n^{1-2/p}(d+d\log \|\*A\| - \min_{i}\log \|\*a_{i}\|))$.
+\end{lemma}
+% 
+\begin{proof}{\label{proof:onlineSummationBound}}
+Recall that $\*A_i$ denotes the $i\times d$ matrix of the first $i$ incoming rows. \online~maintains the covariance matrix $\*M$. At the $(i-1)^{th}$ step we have $\*M = \*A_{i-1}^T\*A_{i-1}$. This is then used to define the score $\tilde{l}_{i}$  for the next step $i$, as $\tilde{l}_i = \min\{i^{p/2-1}\tilde{e}_{i}^{p/2},1\}$, where $\tilde{e}_i = \*a_{i}^T (\*M + \*a_{i} \*a_{i}^{T})^{\dagger} \*a_{i} = \*a_{i}^T (\*A_{i}^T \*A_{i})^{\dagger} \*a_{i}$ and $\*a_{i}^{T}$ is the $i^{th}$ row. 
+The scores $\tilde{e}_{i}$ are also called online leverage scores. We first give a bound on $\sum_{i=1}^{n} \tilde{e}_{i}$. A similar bound is given in the online matrix row sampling by~\cite{cohen2016online}, albeit for a regularized version of the scores $\tilde{e}_i$. 
+As the rows are coming, the rank of $\*M$ increases 
+from $1$ to at most $d$. We say that the algorithm is
+in phase-$k$ if the rank of $\*M$ equals $k$. For each phase $k \in [1, d-1]$, let $i_k$ denote the index
+where row $\*a_{i_k}$ caused a phase-change in $\*M$ i.e. 
+rank of $(\*A_{i_k-1}^{T} \*A_{i_k-1})$ is $k-1$, while rank of $(\*A_{i_k}^{T} \*A_{i_k})$ is $k$. 
+For each such $i_k$, the online leverage score $\tilde{e}_{i_k} = 1$, since row $\*a_{i_k}$
+does not lie in the row space of $\*A_{i_k-1}$. There
+are at most $d$ such indices $i_k$.
+
+We now bound the $\sum_{i\in [i_k, i_{k+1}-1]} \tilde{e}_i$. Suppose the $\mbox{thin-SVD}(\*A_{i_k}^T \*A_{i_k})=\*V\Sigma_{i_k} \*V^T$, all entries in $\Sigma_{i_k}$ being positive. 
+Furthermore, for any $i$ in this phase, i.e. for $i\in [i_{k}+1, i_{k+1}-1]$, $\*V$ forms the basis of the row space of $\*A_{i}$. Define
+$\*X_{i} = \*V^T (\*A_{i}^T \*A_{i}) \*V$ and the $i^{th}$ row $\*a_{i} = \*V \*b_{i}$. Notice that each $\*X_{i}\in \~R^{k\times k}$, and $\*X_{i_k} = \Sigma_{i_k}$. Also, $\*X_{i_k}$ is positive definite. Now for each $i\in [i_{k}+1, i_{k+1}-1]$, we have $\*X_{i} = \*X_{i-1} + \*b_{i} \*b_{i}^T$.
+
+So we have, $\tilde{e}_{i} = \*a_{i}^T(\*A_{i}^T \*A_{i} )^{\dagger}\*a_{i} = \*b_{i}^T\*V^T(\*V(\*X_{i-1}+\*b_{i} \*b_{i}^T)\*V^T)^{\dagger}\*V \*b_{i}=  \*b_{i}^T(\*X_{i-1}+\*b_{i}\*b_{i}^T)^{\dagger}\*b_{i} = \*b_{i}^T(\*X_{i-1}+\*b_{i}\*b_{i}^T)^{-1}\*b_{i}$
+where the last equality uses the invertibility of the matrix. 
+%  
+% Note that matrix $\mathbf{\Sigma_{i-1}}+\*b_{i}\*b_{i}^T$ is a positive definite and hence a full rank matrix. 
+ Since $\*X_{i-1}$ is not rank deficient so by using matrix determinant lemma~\cite{harville1998matrix} on
+ $\mbox{det}(\*X_{i-1}+\*b_{i}\*b_{i}^T)$ we get the following,
+%  \allowdisplaybreaks
+ \begin{eqnarray*}
+  \mbox{det}(\*X_{i-1}+\*b_{i}\*b_{i}^T) &=& \mbox{det}(\*X_{i-1})(1+\*b_{i}^T(\*X_{i-1})^{-1}\*b_{i}) \\
+  &\stackrel{(i)}{\geq}& \mbox{det}(\*X_{i-1})(1+\*b_{i}^T(\*X_{i-1}+\*b_{i} \*b_{i}^T)^{-1}\*b_{i}) \\
+  &=& \mbox{det}(\*X_{i-1})(1+\tilde{e}_{i}) \\
+  &\stackrel{(ii)}{\geq}& \mbox{det}(\*X_{i-1})\exp(\tilde{e}_{i}/2) \\
+  \exp(\tilde{e}_{i}/2) &\leq& \frac{\mbox{det}(\*X_{i-1}+\*b_{i}\*b_{i}^T)}{\mbox{det}(\*X_{i-1})}
+ \end{eqnarray*}
+ Inequality $(i)$ follows as $\*X_{i-1}^{-1} - (\*X_{i-1} + \*b\*b^T)^{-1}\succeq 0$ (i.e. p.s.d.). Inequality $(ii)$ follows from
+ the fact that $1+x \ge \exp(x/2)$ for $x \leq 1$. Now with $\tilde{e}_{i_k} =1$, we analyze the product of the remaining terms of the phase $k$,
+ \begin{align*}
+  \prod_{i\in[i_k+1, i_{k+1}-1]} \exp(\tilde{e}_{i}/2) &\le \prod_{i\in[i_k+1, i_{k+1}-1]}  \frac{\mbox{det}(\*X_{i})}{\mbox{det}(\*X_{i-1})} \\
+  &\le \frac{\mbox{det}(\*X_{i_{k+1}-1})}{\mbox{det}(\*X_{i_k+1})}.
+ \end{align*}
+ Now by taking the product over all phases we get,
+\begin{align*}
+ \exp\bigg(\sum_{i\in [1, i_{d}-1]} \tilde{e}_{i}/2\bigg) 
+ & = \exp((d-1)/2)\Big(\prod_{k\in [1,d-1]} \prod_{i\in[i_k+1, i_{k+1}-1]} \exp(\tilde{e}_{i}/2)\Big) \\
+ & = \exp((d-1)/2)\Big(\prod_{k\in [1,d-1]}\frac{\mbox{det}(\*X_{i_{k+1}-1})}{\mbox{det}(\*X_{i_k+1})}\Big) \\ 
+ & = \exp((d-1)/2)\Big(\frac{\mbox{det}(X_{i_{2}-1})}{\mbox{det}(X_{i_1+1})}\prod_{k\in [2,d-1]} \frac{\mbox{det}(\*X_{i_{k+1}-1})}{\mbox{det}(\*X_{i_k+1})}\Big)
+ \end{align*}
+ Because we know that for any phase $k$ we have $(\*A_{i_{k+1}-1}^T \*A_{i_{k+1}-1}) \succeq (\*A_{i_k+1}^T \*A_{i_k+1})$ so we get,
+ $\mbox{det}(\*X_{i_{k+1}-1}) \ge \mbox{det}(\*X_{i_k+1})$. Further between inter phases terms, i.e. between the last term of phase $k-1$ and the second term of phase $k$ we have $\mbox{det}(\*X_{i_k-1}) \leq \mbox{det}(\*X_{i_k+1})$. Note that we independently handle the first term of phase $k$, i.e. phase change term. Hence we get $\exp((d-1)/2)$ as there are $d-1$ many $i$ such that $\tilde{e}_{i} =1$. Due to these conditions the product of terms from $1$ to $i_{d}-1$ yields a telescopic product, which gives,
+ \begin{align*}
+   \exp\bigg(\sum_{i\in [1, i_{d}-1]} \tilde{e}_{i}/2\bigg) & \le \frac{\exp((d-1)/2)\mbox{det}(\*X_{i_{d}-1})}{\mbox{det}(\*X_{i_1+1})} \\
+   & \le \frac{\exp((d-1)/2)\mbox{det}(\*A_{i_d}^T \*A_{i_d})}{\mbox{det}(\*X_{i_1+1})}
+ \end{align*}
+ Furthermore, we know $\tilde{e}_{i_d}=1$, so for $i\in [i_d, n]$, the matrix $\*M$ is full rank. We follow the same argument as above, and obtain the following,
+ \begin{align*}
+  \exp\bigg(\sum_{i\in [i_d, n]} \tilde{e}_{i}/2\bigg) & \le \frac{\exp(1/2)\mbox{det}(\*A^T \*A)}{\mbox{det}(\*A_{i_d+1}^T \*A_{i_d+1})} \\
+  & \le \frac{\exp(1/2)\|\*A\|^d}{\mbox{det}(\*A_{i_d+1}^T \*A_{i_d+1})} 
+ \end{align*}
+Let $\*a_{i_1+1}$ be the first non independent incoming row. Now multiplying the above two expressions and taking logarithm of both sides, and accounting for the indices $i_k$ for $k\in[2,d]$ we get,
+\begin{align*}
+    \sum_{i\le n} \tilde{e}_i & \le d/2 + 2 d\log\|\*A\| - 2\log \|\*a_{i_1+1}\|  \\
+    & \le d/2 + 2 d\log\|\*A\| - \min_{i}2\log \|\*a_{i}\|. 
+\end{align*}
+Now, we give a bound on $\sum_{i=1}^{n} \tilde{l}_{i}$ where $\tilde{l}_{i} = \min\{1,i^{p/2-1}\tilde{e}_{i}^{p/2}\} \leq \min\{1,n^{p/2-1}\tilde{e}_{i}^{p/2}\}$. We consider two cases. When $\tilde{e}_i^{p/2} \geq n^{1-p/2}$ then $\tilde{l}_{i} = 1$, this implies that $\tilde{e}_i \geq n^{2/p-1}$. But we know $\sum_{i=1}^{n} \tilde{e}_i 
+\le O(d+d\log\|\*A\|-\min_{i}\log \|\*a_{i})\|$ and hence there are at-most $O(n^{1-2/p}(d+d\log\|\*A\|-\min_{i}\log \|\*a_{i}\|))$ indices with $\tilde{l}_{i} = 1$. Now for the case where $\tilde{e}_{i}^{p/2} < n^{1-p/2}$, we get $\tilde{e}_{i}^{p/2-1} \leq (n)^{(1-p/2)(1-2/p)}$. Then $\sum_{i=1}^{n} n^{p/2-1}\tilde{e}_{i}^{p/2} = \sum_{i=1}^{n} n^{p/2-1}\tilde{e}_{i}^{p/2-1} \tilde{e}_{i} \leq \sum_{i=1}^{n}n^{1-2/p}\tilde{e}_{i}$ is $O(n^{1-2/p}(d+d\log\|\*A\|-\min_{i}\log \|\*a_{i}\|))$.
+\end{proof}
+With lemmas~\ref{lemma:onlineSensitivityBound}, \ref{lemma:onlineGuarantee} and \ref{lemma:onlineSummationBound} we prove that the guarantee in theorem \ref{thm:Online} is achieved by \online. The bound on space is evident from the fact that we are maintaining the matrix $\*M$ in algorithm which uses $O(d^{2})$ space and returns a coreset of size $O\Big(\frac{n^{1-2/p}dk}{\epsilon^{-2}}\big(1+\log\|\*A\|-d^{-1}\min_{i}\log \|\*a_{i}\|\big)\Big)$. 
+% 
+\subsection{\kernelfilter}
+In this section, we give a sketch of the proof of theorem \ref{thm:slowOnline}. We use sensitivity based framework to decide the sampling probability of each incoming row. The novelty in this algorithm is by reducing the $p$ order operation to a $q$ order, where $q$ is either $2$ or less than but very close to $2$. Now we give bound on sensitivity score of every incoming row.
+% 
+\begin{lemma}{\label{lemma:slowOnlineSensitivityBound}}
+ Consider a matrix $\*A \in \~R^{n \times d}$, where rows are provided to \kernelfilter~in streaming manner. The term $\tilde{l}_{i}$ defined in the algorithm upper bounds the online sensitivity score, i.e. $\forall i \in [n],$ as follows,
+ \begin{equation*}
+  \tilde{l}_{i} \geq \sup_{\*x}\frac{|\*a_{i}^{T}\*x|^{p}}{\sum_{j=1}^{i}|\*a_{j}^{T}\*x|^{p}}
+ \end{equation*}
+\end{lemma}
+% 
+\begin{proof}{\label{proof:slowOnlineSensitivityBound}}
+ We define the online sensitivity scores $\tilde{s}_{i}$ for each point $i$ as follows,
+  \begin{equation*}
+    \tilde{s}_{i} = \sup_{\{\*x\mid\|\*x\|=1\}}\frac{|\*a_{i}^{T}\*x|^{p}}{\|\*A_{i}\*x\|_{p}^{p}}
+  \end{equation*}
+  Let $\acute{\*A}$ be the matrix where its $j^{th}$ row $\acute{\*a}_{j} = \mbox{vec}(\*a_{j} \otimes^{d^{\lceil p/2 \rceil}}) \in \~R^{d^{\lceil p/2 \rceil}}$. Further let $\acute{\*A}_{i}$ is the corresponding matrix of $\*A_{i} \in \~R^{i \times d}$ which represents first $i$ streaming rows. We define $[\acute{\*U}_{i},\acute{\Sigma}_{i},\acute{\*V}_{i}] = \mbox{svd}(\acute{\*A}_{i})$ such that $\acute{\*a}_{i}^{T} = \acute{\*u}_{i}^{T}\acute{\Sigma}_{i}\acute{\*V}_{i}^{T}$. Now for a fixed $\*x \in \~R^{d}$ its corresponding $\acute{\*x}$ is also fixed in its higher dimension. Here $\acute{\Sigma}_{i}\acute{\*V}_{i}^{T}\acute{\*x}=\acute{\*z}$ from which we define unit vector $\acute{\*y} = \acute{\*z}/\|\acute{\*z}\|$.
+  Now for even value $p$, similar to \cite{schechtman2011tight} can easily upper bound the terms $\tilde{s}_{i}$ as follows,
+%   
+  \begin{eqnarray*}
+   \tilde{s}_{i} &=& \sup_{\{\*x\mid\|\*x\|=1\}}\frac{|\*a_{i}^{T}\*x|^{p}}{\|\*A_{i}\*x\|_{p}^{p}} \\
+   &\leq& \sup_{\{\acute{\*x}\mid\|\acute{\*x}\|=1\}}\frac{|\acute{\*a}_{i}^{T}\acute{\*x}|^{2}}{\|\acute{\*A}_{i}\acute{\*x}\|^{2}} \\
+   &=& \sup_{\{\acute{\*y}\mid\|\acute{\*y}\|=1\}}\frac{|\acute{\*u}_{i}^{T}\acute{\*y}|^{2}}{\|\acute{\*U}_{i}\acute{\*y}\|^{2}} \\
+   &\leq& \|\acute{\*u}_{i}\|^{2}
+  \end{eqnarray*}
+  Here every equality is by substitution from our above mentioned assumptions and the final inequality is well known from \cite{woodruff2014sketching, cohen2015uniform}. Hence finally we get $\tilde{s}_{i} \leq \|\acute{\*u}_{i}\|^{2}$ for even value $p$ as defined in \kernelfilter.
+  
+  Now for odd value $p$ we analyze $\tilde{s}_{i}$ as follows,
+ \begin{eqnarray*}
+  \tilde{s}_{i} &=& \sup_{\{\*x\mid\|\*x\|=1\}}\frac{|\*a_{i}^{T}\*x|^{p}}{\|\*A_{i}\*x\|_{p}^{p}}\\
+  &\stackrel{i}{\leq}& \sup_{\{\acute{\*x}\mid\|\acute{\*x}\|=1\}}\frac{|\acute{\*a}_{i}^{T}\acute{\*x}|^{2p/(p+1)}}{\sum_{j\leq i}|\acute{\*a}_{j}^{T}\acute{\*x}|^{2p/(p+1)}} \\
+  &=& \sup_{\{\acute{\*x}\mid\|\acute{\*x}\|=1\}}\frac{|\acute{\*a}_{i}^{T}\acute{\*x}|^{2p/(p+1)}} {\|\acute{\*A}_{i}\acute{\*x}\|_{2p/(p+1)}^{2p/(p+1)}} \\
+  &=& \sup_{\{\acute{\*y}\mid\|\acute{\*y}\|=1\}}\frac{|\acute{\*u}_{i}^{T}\acute{\*y}|^{2p/(p+1)}} {\|\acute{\*U}_{i}\acute{\*y}\|_{2p/(p+1)}^{2p/(p+1)}} \\
+  &\stackrel{ii}{\leq}& \sup_{\{\acute{\*y}\mid\|\acute{\*y}\|=1\}}\frac{|\acute{\*u}_{i}^{T}\acute{\*y}|^{2p/(p+1)}} {\|\acute{\*U}_{i}\acute{\*y}\|^{2p/(p+1)}} \\ 
+  &=& \sup_{\{\acute{\*y}\mid\|\acute{\*y}\|=1\}}|\acute{\*u}_{i}^{T}\acute{\*y}|^{2p/(p+1)} \\
+  &=& \|\acute{\*u}_{i}\|^{2p/(p+1)} 
+ \end{eqnarray*}
+ The inequality (i) is by lemma \ref{lemma:kernel}. Next with similar assumption as above let $[\acute{\*U}_{i},\acute{\*\Sigma}_{i},\acute{\*V}_{i}]=\mbox{svd}(\acute{\*A}_{i})$. The inequality (ii) is because $\|\acute{\*U}_{i}\acute{\*y}\|_{2p/(p+1)} \geq \|\acute{\*U}_{i}\acute{\*y}\|$ and finally we get $\tilde{s}_{i} \leq \|\acute{\*u}_{i}\|^{2p/(p+1)}$ as defined in \kernelfilter~for odd $p$ value. Hence we get $\tilde{s}_{i} \leq \|\acute{\*u}_{i}\|^{q}$, where $q = 2$ for even value $p$ and $q = 2p/(p+1)$ for odd value $p$.
+\end{proof}
+% 
+Unlike \online, the algorithm \kernelfilter~does not use any additional factor of $i$. Hence it gives tighter upper bounds to the sensitivity scores compared to what lemma~\ref{lemma:onlineSensitivityBound} gives. It will be evident when we sum these upper bounds while computing the sampling complexity. Also note that \kernelfilter~applies to integer value $p \geq 2$. Next in the following we show with these $\tilde{l}_{i}$'s what value $r$ we need to set to get the desired guarantee as claimed in theorem \ref{thm:slowOnline} and theorem \ref{thm:slowOnlineOdd}.
+% 
+\begin{lemma}{\label{lemma:slowOnlineGuarantee}}
+ In the \kernelfilter~let $r$ is set as $O(k\sum_{i=1}^{n}\tilde{l}_{i}/\epsilon^{2})$ then for some fixed k-dimensional subspace $\*Q$, the set $\*C$ with probability $0.99$ $\forall \*x \in \*Q$ satisfies $p$-order tensor contraction as in equation \eqref{eq:contract} and $\ell_{p}$ subspace embedding as in equation \eqref{eq:lp}.
+\end{lemma}
+% 
+% We discuss this in detail in the appendix A.4.2. %~\ref{proof:slowOnlineGuarantee}. 
+\begin{proof}{\label{proof:slowOnlineGuarantee}}
+ For simplicity we prove this lemma at the last timestamp $n$. But it can also be proved for any timestamp $t_{i}$ which is why the \kernelfilter~can also be used in restricted streaming (online) setting. Also for a change we prove our claim for $\ell_{p}$ subspace embedding. Now for some fixed $\*x \in \~R^{d}$ consider the following random variable for every row $\*a_i^{T}$ as,
+\[ w_{i} =
+  \begin{cases}
+    (1/p_{i}-1)|\*a_{i}^{T}\*x|^{p}  & \quad \text{w.p. } p_{i} \\
+    -|\*a_{i}^{T}\*x|^{p} & \quad \text{w.p. } (1-p_{i})
+  \end{cases}
+\]
+% 
+ Note that $\~E[w_{i}] = 0$. Now to show the concentration of the sum of the expected terms we will apply Bernstein's inequality \ref{thm:bernstein} on $W = \sum_{i=1}^{n} w_{i}$. For this first we bound $|w_{i} - \~E[w_{i}]| = |w_{i}| \leq b$ and then we give a bound on $\mbox{var}(W) \leq \sigma^{2}$. 
+
+ Now for the $i^{th}$ timestamp the algorithm \kernelfilter~defines the sampling probability $p_{i} = \min\{1,r\tilde{l}_{i}/\sum_{j \leq i}\tilde{l}_{j}\}$ where $r$ is some constant. If $p_{i}=1$ then $|w_{i}| = 0$, else if $p_{i} <1$ and \kernelfilter~samples the row then $|w_{i}| \leq |\*a_{i}^{T}\*x|^{p}/p_{i} = |\*a_{i}^{T}\*x|^{p}\sum_{j=1}^{i}\tilde{l}_{j}/(r\tilde{l}_{i}) \leq \|\*A_{i}\*x\|_{p}^{p}|\*a_{i}^{T}\*x|^{p}\sum_{j=1}^{i}\tilde{l}_{j}/(r|\*a_{i}^{T}\*x|^{p}) \leq  \|\*A\*x\|_{p}^{p}\sum_{j=1}^{n}\tilde{l}_{j}/r$. Next when \kernelfilter~does not sample the $i^{th}$ row, it means that $p_{i} < 1$, then we have $1 > r\tilde{l}_{i}/\sum_{j=1}^{i}\tilde{l}_{j} \geq r|\*a_{i}^{T}\*x|^{p}/(\|\*A_{i}\*x\|_{p}^{p}\sum_{j=1}^{i}\tilde{l}_{j}) \geq r|\*a_{i}^{T}\*x|^{p}/(\|\*A\*x\|_{p}^{p}\sum_{j=1}^{n}\tilde{l}_{j})$. Finally we get $|\*a_{i}^{T}\*x|^{p} \leq \|\*A\*x\|_{p}^{p}\sum_{j=1}^{n}\tilde{l}_{j}/r$. So for each $i$ we get $|w_{i}| \leq \|\*A\*x\|_{p}^{p}\sum_{j=1}^{n}\tilde{l}_{j}/r$. 
+
+Next we bound the variance of sum of the random variable, i.e. $W = \sum_{i=1}^{n} w_{i}$. Let, $\sigma^{2} = \mbox{var}(W) = \sum_{i=1}^{n} \mbox{var}(w_{i}) = \sum_{i=1}^{n}\~E[w_{i}^{2}]$ as follows,
+% 
+\begin{eqnarray*}
+ \sigma^{2} &=& \sum_{i=1}^{n} \~E[w_{i}^{2}] \\
+ &=& \sum_{i=1}^{n} |\*a_{i}^{T}\*x|^{2p}/p_{i} \\ 
+ &\leq& \sum_{i=1}^{n} |\*a_{i}^{T}\*x|^{2p}\sum_{j=1}^{i}\tilde{l}_{j}/(r\tilde{l}_{i}) \\
+ &=& \|\*A_{i}\*x\|_{p}^{p}\sum_{i=1}^{n} |\*a_{i}^{T}\*x|^{2p}\sum_{j=1}^{i}\tilde{l}_{j}/(r|\*a_{i}^{T}\*x|^{p}) \\
+ &\leq& \|\*A\*x\|_{p}^{2p}\sum_{j=1}^{n}\tilde{l}_{j}/r 
+%  &\leq& ((\sigma^{\max}_{(p-1)})^{(p-1)}(\sigma^{\max}_{(p+1)})^{(p+1)})^{1/2}\|\*A\*x\|_{p}^{p}/c
+\end{eqnarray*}
+% 
+ Now we can apply Bernstein \ref{thm:bernstein} to bound the probability $\mbox{Pr}(|W| \geq \epsilon\|\*A\*x\|_{p}^{p})$. Here we have $b = \|\*A\*x\|_{p}^{p}\sum_{j=1}^{n}\tilde{l}_{j}/r, \sigma^{2} = \|\*A\*x\|_{2p}^{p}\sum_{j=1}^{n}\tilde{l}_{j}/r$ and we set $t = \epsilon\|\*A\*x\|_{p}^{p}$, then we get
+\begin{eqnarray*}
+ \mbox{Pr}(|\|\*C\*x\|_{p}^{p} - \|\*A\*x\|_{p}^{p}| \geq \epsilon\|\*A\*x\|_{p}^{p}) &\leq& \exp\bigg(\frac{-(\epsilon\|\*A\*x\|_{p}^{p})^{2}}{2\|\*A\*x\|_{p}^{2p}\sum_{j=1}^{n}\tilde{l}_{j}/r+\epsilon\|\*A\*x\|_{p}^{2p}\sum_{j=1}^{n}\tilde{l}_{j}/3r}\bigg) \\
+ &=& \exp\bigg(\frac{-r\epsilon^{2}\|\*A\*x\|_{p}^{2p}}{(2+\epsilon/3)\|\*A\*x\|_{p}^{2p}\sum_{j=1}^{n}\tilde{l}_{j}}\bigg) \\
+ &=& \exp\bigg(\frac{-r\epsilon^{2}}{(2+\epsilon/3)\sum_{j=1}^{n}\tilde{l}_{j}}\bigg)
+\end{eqnarray*}
+Note that $|W| = |\|\*C\*x\|_{p}^{p} - \|\*A\*x\|_{p}^{p}|$. Now to ensure that the above probability at most $0.01, \forall \*x \in \*Q$ we use $\epsilon$-net argument as in \ref{argument:epsNet} where we take a union bound over $(2/\epsilon)^{k}, \*x$ from the net. Note that for our purpose $1/2$-net also suffices. Hence with the union bound over all $\*x$ in $1/2$-net we need to set $r = O(k\epsilon^{-2}\sum_{j=1}^{n}\tilde{l}_{j})$. 
+
+Now to ensure the guarantee for tensor contraction as equation \eqref{eq:contract} one can define 
+ \[ w_{i} =
+  \begin{cases}
+   (1/p_{i}-1)(\*a_{i}^{T}\*x)^{p}  & \quad \text{w.p. } p_{i}\\
+   -(\*a_{i}^{T}\*x)^{p} & \quad \text{w.p. } (1-p_{i})
+  \end{cases}
+ \]
+and follow the above proof. By setting the $r = O(k\epsilon^{-2}\sum_{j=1}^{n}\tilde{l}_{j})$ one can get the following $\forall \*x \in \*Q$,
+\begin{equation*}
+ \mbox{Pr}\bigg(|\sum_{\tilde{\*a}_{j} \in \*C}(\tilde{\*a}_{j}^{T}\*x)^{p} - \sum_{j=1}^{n} (\*a_{j}^{T}\*x)^{p}| \geq \epsilon \sum_{j=1}^{n} |\*a_{j}^{T}\*x|^{p}\bigg) \leq 0.01
+\end{equation*}
+One may follow the above proof to claim the final guarantee as in equation \ref{eq:contract} using the same sampling complexity. Again similar to \online~as the sampling probability of the rows are same for both tensor contraction and $\ell_{p}$ subspace embedding, hence the same subsampled rows preserves both the properties as in equation \eqref{eq:contract} and \eqref{eq:lp}.
+\end{proof}
+% 
+Now in order to bound the number of samples, we need a bound on the quantity $\sum_{j=1}^{n}\tilde{l}_{j}$ which we demonstrate in the following lemma.
+\begin{lemma}{\label{lemma:slowOnlineSummationBound}}
+ Let $\*a_{\min} = \text{arg}\min_{i}\|\*a_{i}\|$ and $\tilde{l}_{i}$'s used in \kernelfilter~which satisfy lemma \ref{lemma:slowOnlineSensitivityBound} and \ref{lemma:slowOnlineGuarantee} has bound for $\sum_{i=1}^{n} \tilde{l}_{i}$ as,
+ \begin{itemize}
+  \item $p$ even: $O(d^{p/2}(1+p(\log \|\*A\| - d^{-p/2}\log \|\*a_{\min}\|)))$
+  \item $p$ odd: $O(n^{1/(p+1)}d^{p/2}(1+(p+1)(\log \|\*A\| - d^{-\lceil p/2\rceil}\log \|\*a_{\min}\|))^{p/(p+1)})$
+ \end{itemize}
+\end{lemma}
+% 
+\begin{proof}{\label{proof:slowOnlineSummationBound}}
+ Let $\acute{c}_{i} = \|\acute{\*u}_{i}\|$. Now for even value $p$ we have $\sum_{i=1}^{n} \tilde{l}_{i}=\sum_{i=1}^{n}\acute{c}_{i}^{2}$. From lemma \ref{lemma:onlineSummationBound} we get $\sum_{i=1}^{n} \acute{c}_{i}^{2}$ is $O(d^{p/2}(1+\log \|\acute{\*A}\|-d^{-p/2}\min_{i}\log \|\acute{\*a}_{i}\|)$. Now with $[\*u,\*\Sigma,\*V] = \mbox{svd}(\*A)$ for $i^{th}$ row of $\acute{\*A}$ we have $\acute{\*a}_{i}^{T} = \mbox{vec}(\*a_{i}^{T} \otimes^{p/2}) = \mbox{vec}((\*u_{i}^{T}\*\Sigma\*V^{T})^{p/2})$. So we get $\|\acute{\*A}\| \leq \sigma_{1}^{p/2}$. Hence $\sum_{i=1}^{n}\tilde{l}_i$ is $O(d^{p/2}(1+p(\log \|\*A\|-d^{-p/2}\min_{i}\log \|\*a_{i}\|)))$. 
+ 
+ Now for the odd $p$ case $\sum_{i=1}^{n} \tilde{l}_{i}=\sum_{i=1}^{n}\acute{c}_{i}^{2p/(p+1)}$. From lemma \ref{lemma:onlineSummationBound} we get $\sum_{i=1}^{n} \acute{c}_{i}^{2}$ is $O(d^{\lceil p/2\rceil}(1+\log \|\acute{\*A}\|-d^{-\lceil p/2\rceil}\min_{i}\log \|\acute{\*a}_{i}\|)$. Again, with $[\*u,\*\Sigma,\*V] = \mbox{svd}(\*A)$ for $i^{th}$ row of $\acute{\*A}$ we have $\acute{\*a}_{i}^{T} = \mbox{vec}(\*a_{i}^{T} \otimes^{\lceil p/2 \rceil}) = \mbox{vec}((\*u_{i}^{T}\*\Sigma\*V^{T})^{\lceil p/2\rceil})$. So we get $\|\acute{\*A}\| \leq \sigma_{1}^{(p+1)/2}$. Hence $\sum_{i=1}^{n}\acute{c}_i^2$ is $O(d^{\lceil p/2 \rceil}(1+(p+1)(\log \|\*A\|-d^{-\lceil p/2\rceil}\min_{i}\log \|\*a_{i}\|)))$. Now let $\acute{\*c}$ is a vector with each index $\acute{\*c}_{i}$ is defined as above. Then in this case we have $\sum_{i=1}^{n}\tilde{l}_{i} = \|\acute{\*c}\|_{2p/(p+1)}^{2p/(p+1)} \leq n^{1/(p+1)}\|\acute{\*c}\|^{2p/(p+1)}$ which is $O(n^{1/(p+1)}d^{p/2}(1+(p+1)(\log \|\*A\|-d^{-\lceil p/2\rceil}\min_{i}\log \|\*a_{i}\|))^{p/(p+1)})$.
+\end{proof}
+% 
+The proof of the above lemma is similar to that of lemma \ref{lemma:onlineSummationBound}. It implies that the lemma \ref{lemma:slowOnlineSensitivityBound} gives tighter sensitivity bounds compared to lemma \ref{lemma:onlineSensitivityBound} as the factor of $n$ decreases, as $p$ increases. Now with lemmas \ref{lemma:slowOnlineSensitivityBound}, \ref{lemma:slowOnlineGuarantee} and \ref{lemma:slowOnlineSummationBound} we prove that the guarantee in theorem \ref{thm:slowOnline} and theorem \ref{thm:slowOnlineOdd} is achieved by \kernelfilter. The working space bound of $O(d^{p})$ is evident from the fact that the algorithm is maintaining a $d^{p/2} \times d^{p/2}$ matrix for even $p$ and for odd $p$ it maintains $d^{\lceil p/2 \rceil} \times d^{\lceil p/2 \rceil}$ matrix, hence a working space of $O(d^{p+1})$ is needed.
